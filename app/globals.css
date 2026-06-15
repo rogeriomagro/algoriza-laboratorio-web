@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(135deg, rgba(247, 246, 239, 0.98) 0%, rgba(232, 244, 238, 0.96) 42%, rgba(214, 235, 229, 0.96) 100%);
+  color: #172033;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.field-label {
+  @apply text-xs font-semibold uppercase tracking-normal text-slate-500;
+}
+
+.field-input {
+  @apply w-full rounded-md border border-brand-forest/15 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/15 disabled:bg-slate-100 disabled:text-slate-500;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-brand-forest to-brand-emerald text-white shadow-sm shadow-brand-forest/20 hover:from-brand-deep hover:to-brand-teal;
+}
+
+.btn-secondary {
+  @apply border border-brand-forest/15 bg-white text-slate-700 shadow-sm hover:border-brand-emerald/35 hover:bg-brand-mint;
+}
+
+.btn-danger {
+  @apply bg-rose-700 text-white hover:bg-rose-800;
+}
+
+.section {
+  @apply rounded-lg border border-brand-forest/10 bg-white/95 p-4 shadow-sm shadow-brand-forest/5;
+}

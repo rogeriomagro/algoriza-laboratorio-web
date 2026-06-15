@@ -1,0 +1,300 @@
+Você é um engenheiro full-stack sênior. Crie o MVP de uma ferramenta web interna para validação de orçamentos laboratoriais.
+
+Contexto:
+Já existe um chatbot WhatsApp com n8n + IA que cria atendimentos no Supabase. A ferramenta web deve ser usada pela equipe humana para revisar, corrigir e validar esses atendimentos antes de o cliente receber a resposta. Não altere bot, n8n, workflows ou banco, salvo se for apenas listar uma dependência futura.
+
+Stack obrigatória:
+- Next.js com React e TypeScript
+- Tailwind CSS
+- @supabase/supabase-js
+- Supabase Auth com login compartilhado da equipe
+- Supabase Realtime
+
+Nunca exponha service_role no front. Use somente:
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+Tabelas existentes:
+
+1. atendimentos
+Campos principais:
+id, protocolo, telefone, responsavel_nome,
+paciente_nome, paciente_cpf, paciente_nascimento, paciente_cidade,
+plano_convenio, unidade_preferida, agendamento_desejado,
+medico_solicitante, qualidade_pedido_imagem, observacoes_prescricao,
+observacoes_conversa,
+total_bruto, total_validado,
+status,
+termos_nao_encontrados,
+cotacao_original,
+validado_por, validado_em, enviado_em,
+created_at, updated_at
+
+Status possíveis:
+aguardando_validacao, em_validacao, validado, rejeitado, enviado
+
+2. atendimento_exames
+Campos:
+id, atendimento_id, sku, nome, preco, prazo_dias, jejum_horas,
+preparo, termo_original, match_por, score, ambiguo,
+incluido, editado_manual, ordem, created_at
+
+3. catalogo_exames
+Somente leitura para autocomplete:
+sku, nome, sinonimos, preco, material, metodo, preparo, prazo_dias, jejum_horas
+
+Regras críticas:
+1. Ao abrir um atendimento com status aguardando_validacao, a web deve atualizar para em_validacao.
+2. Isso protege o atendimento contra sobrescrita do bot.
+3. A web nunca calcula nem grava total_validado.
+4. O total é recalculado por trigger no banco. A web só lê total_validado.
+5. Ao editar um exame, marque editado_manual = true.
+6. Remover exame deve preferencialmente fazer incluido = false, não deletar.
+7. Validar muda status para validado e isso dispara webhook externo que envia WhatsApp ao cliente.
+8. Por isso, validar precisa de modal de confirmação e bloqueio contra duplo clique.
+9. Rejeitar muda status para rejeitado.
+10. Cards validado, enviado ou rejeitado devem abrir em modo somente leitura no MVP.
+11. Se telefone estiver vazio, bloquear validação.
+
+Crie o MVP com estas telas:
+
+Tela 1: Login
+- Login via Supabase Auth.
+- Usuário não autenticado não acessa o sistema.
+- Sessão deve persistir ao recarregar.
+- Botão de logout.
+- Como o login é compartilhado, crie um campo "Validador atual" após login ou no layout principal.
+- Salve o nome do validador em localStorage.
+- Use esse nome em validado_por ao validar.
+
+Tela 2: Kanban
+- Rota sugerida: /kanban ou /
+- Buscar atendimentos da tabela atendimentos.
+- Separar em colunas:
+  aguardando_validacao
+  em_validacao
+  validado
+  enviado
+  rejeitado
+- Mostrar contador em cada coluna.
+- Cada card deve exibir:
+  protocolo
+  paciente_nome ou "Paciente não informado"
+  telefone
+  medico_solicitante
+  total_validado, ou total_bruto se total_validado estiver nulo
+  created_at
+  alerta se termos_nao_encontrados tiver itens
+- Clique no card abre /atendimentos/[id].
+- Implementar filtros simples por texto: protocolo, paciente, telefone ou médico.
+- Implementar Supabase Realtime para atualizar cards quando houver INSERT/UPDATE/DELETE em atendimentos.
+
+Tela 3: Card de validação
+- Rota: /atendimentos/[id]
+- Ao carregar:
+  buscar atendimento por id
+  buscar exames em atendimento_exames por atendimento_id
+  ordenar por ordem ASC e fallback por created_at ASC
+- Se status for aguardando_validacao:
+  fazer update condicional para em_validacao
+  depois recarregar atendimento
+- Se já estiver em_validacao:
+  mostrar aviso de possível edição por outra pessoa
+- Se status for validado, enviado ou rejeitado:
+  abrir somente leitura
+
+Blocos da tela:
+1. Cabeçalho
+- protocolo
+- status
+- data
+- telefone
+- responsável
+- total_validado
+- botões Voltar, Rejeitar, Validar
+
+2. Dados do paciente
+Campos editáveis enquanto em_validacao:
+paciente_nome, paciente_cpf, paciente_nascimento, paciente_cidade,
+plano_convenio, unidade_preferida, agendamento_desejado
+
+3. Prescrição
+Mostrar:
+medico_solicitante
+qualidade_pedido_imagem
+observacoes_prescricao
+Permitir editar medico_solicitante e observacoes_prescricao.
+Manter qualidade_pedido_imagem somente leitura.
+
+4. Observações da conversa
+Campo editável:
+observacoes_conversa
+
+5. Termos não encontrados
+Exibir termos_nao_encontrados em destaque.
+Ao clicar em um termo, preencher a busca do autocomplete de catálogo com esse termo.
+
+6. Lista de exames
+Para cada exame:
+- incluído: checkbox
+- nome
+- sku
+- preco editável
+- prazo_dias editável
+- jejum_horas editável
+- preparo editável
+- termo_original somente leitura
+- match_por somente leitura
+- score somente leitura
+- ambiguo com destaque visual
+- botão "Remover do orçamento" que seta incluido = false
+
+Ao alterar preco, prazo_dias, jejum_horas, preparo ou incluido:
+- atualizar atendimento_exames
+- setar editado_manual = true
+- depois recarregar atendimento para ler total_validado atualizado
+
+Validações:
+- bloquear preco negativo
+- bloquear prazo_dias negativo
+- bloquear jejum_horas negativo
+- permitir preço zero, mas mostrar alerta
+- mostrar alerta se preparo vazio
+- não converter paciente_nascimento para Date; manter texto
+
+7. Adicionar exame pelo catálogo
+- Criar autocomplete usando catalogo_exames.
+- Buscar por nome, sku e sinonimos.
+- MVP pode usar ilike simples.
+- Ao selecionar exame, inserir em atendimento_exames:
+  atendimento_id
+  sku
+  nome
+  preco
+  preparo
+  prazo_dias
+  jejum_horas
+  incluido = true
+  editado_manual = true
+  ordem = próxima ordem disponível
+- Depois recarregar exames e atendimento.
+
+8. Total
+- Exibir total_validado vindo de atendimentos.
+- Se nulo, mostrar "Total ainda não calculado".
+- Se zero, mostrar alerta.
+- Não somar exames no front para definir total oficial.
+
+Ações:
+Validar:
+- Disponível apenas em status em_validacao.
+- Bloquear se telefone estiver vazio.
+- Mostrar modal:
+  "Ao validar, o orçamento será enviado ao cliente pelo WhatsApp. Deseja continuar?"
+- Mostrar telefone e total_validado no modal.
+- Recomendar preenchimento de validador atual.
+- Ao confirmar:
+  update atendimentos set:
+    status = 'validado'
+    validado_por = validador atual
+    validado_em = new Date().toISOString()
+- Bloquear duplo clique com loading.
+- Após sucesso, recarregar e deixar somente leitura.
+
+Rejeitar:
+- Disponível apenas em status em_validacao.
+- Mostrar confirmação.
+- Ao confirmar:
+  update atendimentos set status = 'rejeitado'
+- Após sucesso, voltar ou deixar somente leitura.
+
+Realtime:
+- Kanban deve assinar mudanças em atendimentos.
+- Tela de detalhe deve assinar mudanças no atendimento atual e seus atendimento_exames.
+- Se outro usuário alterar enquanto a tela está aberta, mostrar aviso e recarregar dados.
+- MVP pode usar last-write-wins, mas avise visualmente.
+
+Organização sugerida de pastas:
+app/
+  layout.tsx
+  page.tsx
+  login/page.tsx
+  atendimentos/[id]/page.tsx
+components/
+  auth/
+  kanban/
+  atendimento/
+  exames/
+  ui/
+lib/
+  supabase/client.ts
+  supabase/types.ts
+  format.ts
+  status.ts
+hooks/
+  useSession.ts
+  useRealtimeAtendimentos.ts
+  useRealtimeAtendimento.ts
+
+Componentes mínimos:
+- AuthGate
+- LoginForm
+- AppShell
+- KanbanBoard
+- KanbanColumn
+- AtendimentoCard
+- AtendimentoValidationPage
+- AtendimentoHeader
+- PatientForm
+- PrescriptionPanel
+- TermsNotFoundAlert
+- ExamList
+- ExamRow
+- CatalogAutocomplete
+- TotalSummary
+- ConfirmValidateDialog
+- ConfirmRejectDialog
+- StatusBadge
+
+Qualidade de UI:
+- Interface simples, densa e operacional.
+- Não fazer landing page.
+- Primeiro acesso logado deve abrir o Kanban.
+- Usar Tailwind com layout limpo.
+- Estados obrigatórios: loading, erro, vazio, salvando, validando, rejeitando.
+- Botões críticos precisam de confirmação.
+- Campos somente leitura devem ficar visualmente claros.
+- Status deve ter badge.
+
+Critérios de aceite:
+1. Usuário loga e acessa Kanban.
+2. Kanban carrega cards por status.
+3. Contadores batem com os cards.
+4. Novo atendimento aparece por Realtime.
+5. Abrir card aguardando_validacao muda para em_validacao.
+6. Dados do paciente podem ser editados.
+7. Exames podem ser editados.
+8. Alteração de exame marca editado_manual = true.
+9. Desmarcar exame seta incluido = false.
+10. Adicionar exame copia dados do catalogo_exames.
+11. total_validado é apenas lido do banco.
+12. Validar muda status para validado com confirmação.
+13. Rejeitar muda status para rejeitado com confirmação.
+14. Card validado/enviado/rejeitado fica somente leitura.
+15. Nenhuma service_role key aparece no front.
+16. Projeto roda com npm run dev.
+17. Build passa com npm run build.
+
+Ao implementar:
+- Primeiro inspecione a pasta atual.
+- Se já existir app, siga a estrutura existente.
+- Se não existir, crie o app dentro da pasta da ferramenta web.
+- Não altere arquivos fora do escopo da ferramenta web.
+- Não use dados reais hardcoded.
+- Use variáveis de ambiente.
+- Ao final, entregue:
+  resumo do que foi criado
+  arquivos principais
+  comandos para rodar
+  variáveis de ambiente necessárias
+  riscos/pendências
