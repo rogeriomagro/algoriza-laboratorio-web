@@ -324,23 +324,27 @@ function AtendimentoPageContent() {
             <TotalSummary atendimento={atendimento} />
 
             <section className="section">
-              <h2 className="text-lg font-semibold text-slate-950">Rastreio</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Histórico simples do que já aconteceu com este atendimento.
+              <h2 className="section-title">Rastreio do atendimento</h2>
+              <p className="section-copy">
+                Histórico objetivo das principais movimentações deste orçamento.
               </p>
 
               <dl className="mt-4 space-y-3 text-sm">
-                <div>
+                <div className="soft-card">
                   <dt className="field-label">Validado por</dt>
-                  <dd className="text-slate-900">{atendimento.validado_por || "Ainda não validado"}</dd>
+                  <dd className="mt-1 text-slate-900">{atendimento.validado_por || "Ainda não definido"}</dd>
                 </div>
-                <div>
+                <div className="soft-card">
                   <dt className="field-label">Validado em</dt>
-                  <dd className="text-slate-900">{formatDate(atendimento.validado_em)}</dd>
+                  <dd className="mt-1 text-slate-900">
+                    {atendimento.validado_em ? formatDate(atendimento.validado_em) : "Ainda não validado"}
+                  </dd>
                 </div>
-                <div>
+                <div className="soft-card">
                   <dt className="field-label">Enviado em</dt>
-                  <dd className="text-slate-900">{formatDate(atendimento.enviado_em)}</dd>
+                  <dd className="mt-1 text-slate-900">
+                    {atendimento.enviado_em ? formatDate(atendimento.enviado_em) : "Envio ainda não registrado"}
+                  </dd>
                 </div>
               </dl>
             </section>

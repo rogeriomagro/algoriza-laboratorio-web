@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import type { AtendimentoExame, CatalogoExame } from "@/lib/supabase/types";
 import { formatCurrency, formatDays, formatHours } from "@/lib/format";
@@ -139,9 +139,9 @@ export function CatalogAutocomplete({
   return (
     <section className="section">
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-950">Adicionar exame manualmente</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Use esta busca quando a equipe quiser complementar ou corrigir o orçamento pelo catálogo oficial.
+        <h2 className="section-title">Adicionar exame pelo catálogo</h2>
+        <p className="section-copy">
+          Use esta busca quando a equipe precisar complementar ou corrigir o orçamento manualmente.
         </p>
       </div>
 
@@ -164,7 +164,7 @@ export function CatalogAutocomplete({
           {results.map((exame) => (
             <div
               key={`${exame.sku}-${exame.nome}`}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
@@ -202,7 +202,7 @@ export function CatalogAutocomplete({
                   disabled={readOnly || addingSku === (exame.sku || exame.nome)}
                 >
                   <Plus className="h-4 w-4" />
-                  {addingSku === (exame.sku || exame.nome) ? "Adicionando..." : "Adicionar ao atendimento"}
+                  {addingSku === (exame.sku || exame.nome) ? "Adicionando..." : "Adicionar ao orçamento"}
                 </button>
               </div>
             </div>
@@ -212,15 +212,7 @@ export function CatalogAutocomplete({
 
       {searchTerm.length >= 2 && !loading && !error && results.length === 0 ? (
         <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-          Nenhum exame encontrado para esse termo. Tente procurar pelo nome completo, sigla ou algum sinônimo mais
-          específico.
-        </div>
-      ) : null}
-
-      {!readOnly && results.length > 0 ? (
-        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-          <ArrowUpRight className="h-3.5 w-3.5" />
-          Ao adicionar, o exame entra imediatamente na lista abaixo para revisão.
+          Nenhum exame encontrado para esse termo. Tente procurar pelo nome completo, sigla ou um sinônimo mais específico.
         </div>
       ) : null}
     </section>

@@ -12,7 +12,10 @@ html {
 
 body {
   margin: 0;
-  background: linear-gradient(180deg, #fbfcfa 0%, #f3f8f5 52%, #edf6f1 100%);
+  background:
+    radial-gradient(circle at top left, rgba(0, 122, 90, 0.1), transparent 24%),
+    radial-gradient(circle at top right, rgba(47, 143, 139, 0.08), transparent 20%),
+    linear-gradient(180deg, #fbfcfa 0%, #f4f8f6 48%, #edf5f1 100%);
   color: #172033;
 }
 
@@ -37,7 +40,7 @@ textarea::placeholder {
 }
 
 .field-input {
-  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-emerald focus:ring-4 focus:ring-brand-emerald/10 disabled:bg-slate-100 disabled:text-slate-500;
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-emerald focus:ring-4 focus:ring-brand-emerald/10 disabled:bg-slate-100 disabled:text-slate-500;
 }
 
 .btn {
@@ -57,11 +60,11 @@ textarea::placeholder {
 }
 
 .section {
-  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5;
+  @apply rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm shadow-slate-900/5;
 }
 
 .subsection {
-  @apply rounded-xl border border-slate-200 bg-slate-50/70 p-4;
+  @apply rounded-xl border border-slate-200 bg-slate-50/80 p-4;
 }
 
 .chip {
@@ -70,4 +73,24 @@ textarea::placeholder {
 
 .powered-by {
   @apply text-xs text-slate-500;
+}
+
+.section-title {
+  @apply text-lg font-semibold text-slate-950;
+}
+
+.section-copy {
+  @apply mt-1 text-sm leading-6 text-slate-600;
+}
+
+.soft-card {
+  @apply rounded-xl border border-slate-200 bg-slate-50/80 p-4;
+}
+
+.metric-card {
+  @apply rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/5;
+}
+
+.menu-surface {
+  @apply rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10;
 }

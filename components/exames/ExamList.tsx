@@ -12,10 +12,9 @@ export function ExamList({ exames, readOnly, saving, onSave }: ExamListProps) {
   return (
     <section className="section">
       <div className="mb-5">
-        <h2 className="text-lg font-semibold text-slate-950">Exames do orçamento</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Revise somente o que realmente precisa de ajuste. Os detalhes técnicos podem ficar recolhidos para a equipe
-          trabalhar com mais agilidade.
+        <h2 className="section-title">Exames do orçamento</h2>
+        <p className="section-copy">
+          A lista abaixo prioriza leitura rápida. Os campos de edição continuam disponíveis sem deixar a tela pesada.
         </p>
       </div>
 

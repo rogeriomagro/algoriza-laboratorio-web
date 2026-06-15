@@ -17,7 +17,7 @@ const fields: Array<{ key: keyof Atendimento; label: string; placeholder?: strin
   { key: "paciente_cidade", label: "Cidade" },
   { key: "plano_convenio", label: "Plano ou convênio" },
   { key: "unidade_preferida", label: "Unidade preferida" },
-  { key: "agendamento_desejado", label: "Preferência de agendamento" }
+  { key: "agendamento_desejado", label: "Agendamento desejado" }
 ];
 
 interface PatientFormProps {
@@ -55,31 +55,31 @@ export function PatientForm({ atendimento, readOnly, saving, onSave }: PatientFo
     <section className="section">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Dados do paciente</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Confirme os dados cadastrais antes de aprovar o orçamento.
+          <h2 className="section-title">Dados do paciente</h2>
+          <p className="section-copy">
+            Confirme os dados principais do atendimento antes de validar o orçamento.
           </p>
         </div>
         <button className="btn btn-secondary" onClick={save} disabled={readOnly || saving}>
-          {saving ? "Salvando..." : "Salvar dados do paciente"}
+          {saving ? "Salvando..." : "Salvar dados"}
         </button>
       </div>
 
-      <div className="mb-4 grid gap-3 md:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="field-label">Contato do responsável</p>
+      <div className="mb-5 grid gap-3 lg:grid-cols-3">
+        <div className="soft-card">
+          <p className="field-label">Telefone de contato</p>
           <p className="mt-1 text-sm font-semibold text-slate-950">{formatPhone(atendimento.telefone)}</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="soft-card">
           <p className="field-label">Responsável pelo atendimento</p>
           <p className="mt-1 text-sm font-semibold text-slate-950">
             {atendimento.responsavel_nome || "Não informado"}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="soft-card">
           <p className="field-label">Situação cadastral</p>
           <p className="mt-1 text-sm font-semibold text-slate-950">
-            {form.paciente_nome ? "Dados em revisão" : "Aguardando preenchimento"}
+            {form.paciente_nome ? "Dados em conferência" : "Aguardando preenchimento"}
           </p>
         </div>
       </div>

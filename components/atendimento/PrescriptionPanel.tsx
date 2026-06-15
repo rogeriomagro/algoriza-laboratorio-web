@@ -34,13 +34,13 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
     <section className="section">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Pedido médico e contexto da conversa</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Separe o que veio do pedido do que foi informado durante o atendimento.
+          <h2 className="section-title">Prescrição e contexto</h2>
+          <p className="section-copy">
+            Separe o que veio do pedido médico do que foi complementado durante a conversa com o cliente.
           </p>
         </div>
         <button className="btn btn-secondary" onClick={save} disabled={readOnly || saving}>
-          {saving ? "Salvando..." : "Salvar observações"}
+          {saving ? "Salvando..." : "Salvar notas"}
         </button>
       </div>
 
@@ -49,7 +49,7 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
           <div className="mb-4">
             <h3 className="text-base font-semibold text-slate-950">Pedido médico</h3>
             <p className="mt-1 text-sm text-slate-600">
-              Informações mais objetivas ligadas ao exame e ao pedido anexado.
+              Dados clínicos mais objetivos ligados ao exame e ao pedido anexado.
             </p>
           </div>
 
@@ -87,14 +87,14 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
 
         <div className="subsection">
           <div className="mb-4">
-            <h3 className="text-base font-semibold text-slate-950">Contexto da conversa</h3>
+            <h3 className="text-base font-semibold text-slate-950">Notas da conversa</h3>
             <p className="mt-1 text-sm text-slate-600">
-              Preferências, restrições e observações operacionais passadas pelo cliente.
+              Preferências, restrições e observações operacionais passadas durante o atendimento.
             </p>
           </div>
 
           <label className="block">
-            <span className="field-label">Observações da conversa</span>
+            <span className="field-label">Anotações internas</span>
             <textarea
               className="field-input mt-1 min-h-[216px]"
               value={observacoesConversa}
