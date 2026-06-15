@@ -11,13 +11,16 @@ interface ExamListProps {
 export function ExamList({ exames, readOnly, saving, onSave }: ExamListProps) {
   return (
     <section className="section">
-      <div className="mb-4">
-        <h2 className="text-base font-semibold text-slate-950">Exames</h2>
-        <p className="text-sm text-slate-600">Edite preço, prazo, jejum, preparo e inclusão. O total oficial vem do banco.</p>
+      <div className="mb-5">
+        <h2 className="text-lg font-semibold text-slate-950">Exames do orçamento</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Revise somente o que realmente precisa de ajuste. Os detalhes técnicos podem ficar recolhidos para a equipe
+          trabalhar com mais agilidade.
+        </p>
       </div>
 
       {exames.length === 0 ? (
-        <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
           Nenhum exame vinculado a este atendimento.
         </div>
       ) : (

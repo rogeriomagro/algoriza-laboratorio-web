@@ -6,10 +6,13 @@
   color-scheme: light;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  background:
-    linear-gradient(135deg, rgba(247, 246, 239, 0.98) 0%, rgba(232, 244, 238, 0.96) 42%, rgba(214, 235, 229, 0.96) 100%);
+  background: linear-gradient(180deg, #fbfcfa 0%, #f3f8f5 52%, #edf6f1 100%);
   color: #172033;
 }
 
@@ -20,30 +23,51 @@ select {
   font: inherit;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
 .field-label {
-  @apply text-xs font-semibold uppercase tracking-normal text-slate-500;
+  @apply text-sm font-medium text-slate-700;
+}
+
+.field-hint {
+  @apply mt-1 text-xs text-slate-500;
 }
 
 .field-input {
-  @apply w-full rounded-md border border-brand-forest/15 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/15 disabled:bg-slate-100 disabled:text-slate-500;
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-emerald focus:ring-4 focus:ring-brand-emerald/10 disabled:bg-slate-100 disabled:text-slate-500;
 }
 
 .btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-emerald/15;
 }
 
 .btn-primary {
-  @apply bg-gradient-to-r from-brand-forest to-brand-emerald text-white shadow-sm shadow-brand-forest/20 hover:from-brand-deep hover:to-brand-teal;
+  @apply bg-gradient-to-r from-brand-forest via-brand-emerald to-brand-teal text-white shadow-sm shadow-brand-emerald/15 hover:brightness-105;
 }
 
 .btn-secondary {
-  @apply border border-brand-forest/15 bg-white text-slate-700 shadow-sm hover:border-brand-emerald/35 hover:bg-brand-mint;
+  @apply border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-brand-emerald/35 hover:bg-brand-mint;
 }
 
 .btn-danger {
-  @apply bg-rose-700 text-white hover:bg-rose-800;
+  @apply border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100;
 }
 
 .section {
-  @apply rounded-lg border border-brand-forest/10 bg-white/95 p-4 shadow-sm shadow-brand-forest/5;
+  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-900/5;
+}
+
+.subsection {
+  @apply rounded-xl border border-slate-200 bg-slate-50/70 p-4;
+}
+
+.chip {
+  @apply inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700;
+}
+
+.powered-by {
+  @apply text-xs text-slate-500;
 }

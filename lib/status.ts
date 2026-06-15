@@ -1,7 +1,6 @@
 import type { AtendimentoStatus } from "@/lib/supabase/types";
 
-// Status visiveis no Kanban. "cancelado" fica fora de proposito:
-// o card sai das colunas, mas o registro continua preservado no banco.
+// "cancelado" fica fora do Kanban, mas continua salvo no banco.
 export const STATUS_ORDER: AtendimentoStatus[] = [
   "aguardando_validacao",
   "em_validacao",
@@ -20,12 +19,12 @@ export const STATUS_LABEL: Record<AtendimentoStatus, string> = {
 };
 
 export const STATUS_DESCRIPTION: Record<AtendimentoStatus, string> = {
-  aguardando_validacao: "Novos atendimentos enviados pelo bot",
-  em_validacao: "Atendimentos em revisão humana",
-  validado: "Validados e prontos para envio",
-  enviado: "Resposta já enviada ao cliente",
-  rejeitado: "Atendimentos rejeitados",
-  cancelado: "Atendimentos removidos do Kanban"
+  aguardando_validacao: "Atendimentos recebidos pelo bot e aguardando leitura da equipe.",
+  em_validacao: "Atendimentos em revisão humana, com edição liberada.",
+  validado: "Orçamentos aprovados e prontos para seguir para o cliente.",
+  enviado: "Resposta já encaminhada ao cliente.",
+  rejeitado: "Atendimentos rejeitados pela equipe.",
+  cancelado: "Atendimentos removidos da operação ativa."
 };
 
 export const READONLY_STATUS = new Set<AtendimentoStatus>([
@@ -36,10 +35,10 @@ export const READONLY_STATUS = new Set<AtendimentoStatus>([
 ]);
 
 export const STATUS_BADGE_CLASS: Record<AtendimentoStatus, string> = {
-  aguardando_validacao: "bg-amber-100 text-amber-800 border-amber-200",
-  em_validacao: "bg-brand-teal/10 text-brand-forest border-brand-teal/25",
-  validado: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  enviado: "bg-brand-forest/10 text-brand-forest border-brand-forest/20",
-  rejeitado: "bg-rose-100 text-rose-800 border-rose-200",
-  cancelado: "bg-slate-100 text-slate-600 border-slate-200"
+  aguardando_validacao: "border-amber-200 bg-amber-50 text-amber-800",
+  em_validacao: "border-teal-200 bg-teal-50 text-teal-800",
+  validado: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  enviado: "border-brand-forest/15 bg-brand-forest/5 text-brand-forest",
+  rejeitado: "border-rose-200 bg-rose-50 text-rose-700",
+  cancelado: "border-slate-200 bg-slate-100 text-slate-600"
 };

@@ -2,9 +2,9 @@
 
 import { useState, type MouseEvent } from "react";
 import Link from "next/link";
-import { AlertCircle, CalendarClock, Trash2 } from "lucide-react";
+import { AlertCircle, CalendarClock, Phone, Stethoscope, Trash2 } from "lucide-react";
 import type { Atendimento } from "@/lib/supabase/types";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPhone } from "@/lib/format";
 import { supabase } from "@/lib/supabase/client";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
@@ -15,28 +15,28 @@ interface AtendimentoCardProps {
 
 export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps) {
   const [cancelling, setCancelling] = useState(false);
+
   const total = atendimento.total_validado ?? atendimento.total_bruto;
-  const hasMissingTerms = Array.isArray(atendimento.termos_nao_encontrados) && atendimento.termos_nao_encontrados.length > 0;
+  const hasMissingTerms =
+    Array.isArray(atendimento.termos_nao_encontrados) && atendimento.termos_nao_encontrados.length > 0;
 
   async function handleCancel(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
 
     const ok = window.confirm(
-      "Remover este card do Kanban?\n\nOs dados não serão apagados. O atendimento será marcado como cancelado no Supabase."
+      "Remover este atendimento do quadro?\n\nOs dados continuarão salvos. O status será alterado para cancelado."
     );
     if (!ok) return;
 
     setCancelling(true);
-    const { error } = await supabase
-      .from("atendimentos")
-      .update({ status: "cancelado" })
-      .eq("id", atendimento.id);
+
+    const { error } = await supabase.from("atendimentos").update({ status: "cancelado" }).eq("id", atendimento.id);
 
     setCancelling(false);
 
     if (error) {
-      window.alert(`Não foi possível cancelar o atendimento: ${error.message}`);
+      window.alert(`Não foi possível remover o card: ${error.message}`);
       return;
     }
 
@@ -44,47 +44,63 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
   }
 
   return (
-    <article className="group block rounded-lg border border-brand-forest/10 bg-gradient-to-br from-white via-white to-brand-mint/55 p-3 shadow-sm shadow-brand-forest/5 transition hover:-translate-y-0.5 hover:border-brand-emerald/45 hover:shadow-md hover:shadow-brand-forest/10">
-      <div className="mb-3 h-1 rounded-full bg-gradient-to-r from-brand-forest via-brand-emerald to-brand-teal opacity-80 transition group-hover:opacity-100" />
+    <article className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/70 transition hover:-translate-y-0.5 hover:border-brand-emerald/35 hover:shadow-md hover:shadow-brand-forest/10">
+      <div className="mb-4 h-1 rounded-full bg-gradient-to-r from-brand-forest via-brand-emerald to-brand-teal" />
 
-      <div className="mb-2 flex items-start justify-between gap-2">
+      <div className="mb-3 flex items-start justify-between gap-3">
         <Link href={`/atendimentos/${atendimento.id}`} className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-slate-500">{atendimento.protocolo || "Sem protocolo"}</p>
-          <h3 className="mt-1 text-sm font-semibold text-slate-950">
+          <p className="text-xs font-medium tracking-[0.02em] text-slate-500">
+            {atendimento.protocolo || "Sem protocolo"}
+          </p>
+          <h3 className="mt-1 text-base font-semibold leading-tight text-slate-950">
             {atendimento.paciente_nome || "Paciente não informado"}
           </h3>
         </Link>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex items-center gap-2">
           <StatusBadge status={atendimento.status} />
           <button
             type="button"
             onClick={handleCancel}
             disabled={cancelling}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-rose-100 bg-white text-rose-600 transition hover:border-rose-200 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60"
-            title="Remover card do Kanban"
-            aria-label="Remover card do Kanban"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-60"
+            title="Retirar este atendimento do quadro"
+            aria-label="Retirar este atendimento do quadro"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <Link href={`/atendimentos/${atendimento.id}`} className="block">
-        <div className="space-y-1 text-xs text-slate-600">
-          <p>Telefone: {atendimento.telefone || "-"}</p>
-          <p>Médico: {atendimento.medico_solicitante || "-"}</p>
-          <p className="font-semibold text-slate-900">Total: {formatCurrency(total)}</p>
-          <p className="flex items-center gap-1">
-            <CalendarClock className="h-3.5 w-3.5" />
-            {formatDate(atendimento.created_at)}
-          </p>
+      <Link href={`/atendimentos/${atendimento.id}`} className="block space-y-3">
+        <div className="space-y-2 text-sm text-slate-600">
+          <div className="flex items-center gap-2">
+            <Phone className="h-4 w-4 text-brand-emerald" />
+            <span>{formatPhone(atendimento.telefone)}</span>
+          </div>
+
+          <div className="flex items-start gap-2">
+            <Stethoscope className="mt-0.5 h-4 w-4 text-brand-emerald" />
+            <span className="line-clamp-2">{atendimento.medico_solicitante || "Médico não informado"}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-brand-emerald" />
+            <span>{formatDate(atendimento.created_at)}</span>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">Total do atendimento</p>
+          <p className="mt-1 text-lg font-semibold text-slate-950">{formatCurrency(total)}</p>
         </div>
 
         {hasMissingTerms ? (
-          <div className="mt-2 flex items-center gap-1 rounded-md border border-amber-100 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Termos não encontrados
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <div className="flex items-center gap-2 font-medium">
+              <AlertCircle className="h-4 w-4" />
+              Atenção para termos não reconhecidos
+            </div>
           </div>
         ) : null}
       </Link>

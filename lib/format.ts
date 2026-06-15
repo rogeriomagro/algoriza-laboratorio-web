@@ -14,11 +14,11 @@ export function parseCurrency(value: number | string | null | undefined): number
 
 export function formatCurrency(value: number | string | null | undefined): string {
   const parsed = parseCurrency(value);
-  if (parsed === null) return "Total ainda não calculado";
+  if (parsed === null) return "Não informado";
 
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
-    currency: "BRL"
+    currency: "BRL",
   }).format(parsed);
 }
 
@@ -26,13 +26,31 @@ export function formatDate(value: string | null | undefined): string {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
+
   return new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+  }).format(date);
+}
+
+export function formatDateOnly(value: string | null | undefined): string {
+  if (!value) return "-";
+
+  const directMatch = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (directMatch) return directMatch[0];
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   }).format(date);
 }
 
@@ -47,4 +65,92 @@ export function normalizeSearch(value: string | null | undefined): string {
 export function asString(value: unknown): string {
   if (value === null || value === undefined) return "";
   return String(value);
+}
+
+export function formatCpf(value: string | null | undefined): string {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 11);
+  if (!digits) return "";
+
+  return digits
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
+
+export function formatPhone(value: string | null | undefined): string {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+
+  const national = digits.length > 11 ? digits.slice(-11) : digits;
+  if (national.length <= 10) {
+    return national
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  }
+
+  return national
+    .replace(/^(\d{2})(\d)/, "($1) $2")
+    .replace(/(\d{5})(\d)/, "$1-$2");
+}
+
+export function formatBirthDateInput(value: string | null | undefined): string {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+  if (!digits) return "";
+
+  return digits.replace(/^(\d{2})(\d)/, "$1/$2").replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+}
+
+export function formatSchedulePreference(value: string | null | undefined): string {
+  const input = String(value || "").trim();
+  if (!input) return "";
+
+  const match = input.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(.+))?$/i);
+  if (!match) return input;
+
+  const [, year, month, day, periodRaw] = match;
+  const period = normalizeSearch(periodRaw || "");
+
+  let suffix = "";
+  if (period.includes("manha")) suffix = "período da manhã";
+  else if (period.includes("tarde")) suffix = "período da tarde";
+  else if (period.includes("noite")) suffix = "período da noite";
+
+  return suffix ? `${day}/${month}/${year}, ${suffix}` : `${day}/${month}/${year}`;
+}
+
+export function describeMatch(match: string | null | undefined): string {
+  const value = normalizeSearch(match);
+
+  switch (value) {
+    case "nome_exato":
+      return "Correspondência exata";
+    case "sinonimo_exato":
+      return "Sinônimo exato";
+    case "sku_exato":
+      return "SKU exato";
+    case "substring":
+      return "Correspondência por termo";
+    case "manual_catalogo":
+      return "Adicionado manualmente";
+    case "similarity":
+      return "Correspondência aproximada";
+    default:
+      return value ? "Correspondência identificada" : "Sem correspondência registrada";
+  }
+}
+
+export function formatDays(value: number | string | null | undefined): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Prazo não informado";
+  const amount = Number(raw.replace(",", "."));
+  if (!Number.isFinite(amount)) return raw;
+  return `${amount} ${amount === 1 ? "dia" : "dias"}`;
+}
+
+export function formatHours(value: number | string | null | undefined): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Sem jejum informado";
+  const amount = Number(raw.replace(",", "."));
+  if (!Number.isFinite(amount)) return raw;
+  return `${amount} ${amount === 1 ? "hora" : "horas"}`;
 }

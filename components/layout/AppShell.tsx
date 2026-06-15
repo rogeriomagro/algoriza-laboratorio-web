@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Hammer, LogOut, RefreshCw } from "lucide-react";
+import { Activity, Hammer, LogOut, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useValidatorName } from "@/hooks/useValidatorName";
+import { LabBrand } from "@/components/layout/LabBrand";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -24,27 +25,27 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
 
   const navItems = [
     { href: "/", label: "Kanban", disabled: false },
-    { href: "/usuarios", label: "Usuarios", disabled: false },
-    { href: "/sugestoes-base", label: "Sugestoes da base", disabled: true, badge: "Em desenvolvimento" },
+    { href: "/usuarios", label: "Usuários", disabled: false },
+    { href: "/sugestoes-base", label: "Sugestões da base", disabled: true, badge: "Ambiente de homologação" },
   ];
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-brand-emerald/20 bg-gradient-to-r from-brand-deep via-brand-forest to-brand-emerald text-white shadow-lg shadow-brand-forest/20">
-        <div className="h-1 bg-gradient-to-r from-brand-teal via-brand-mint to-white/80" />
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-md border border-white/20 bg-white">
-              <img src="/brand/brand-mark.png" alt="" className="h-9 w-9 object-contain" />
-            </span>
-            <span>
-              <span className="block text-base font-semibold text-white">Validacao de Orcamentos</span>
-              <span className="block text-xs text-brand-mint">Laboratorios Nossa Senhora da Penha e Alfa Diagnostico</span>
-            </span>
-          </Link>
+      <header className="sticky top-0 z-30 border-b border-brand-forest/10 bg-white/95 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex min-w-0 flex-1 items-start gap-4">
+            <LabBrand compact />
+            <div className="min-w-0">
+              <p className="text-xl font-semibold text-brand-forest">Validação de Orçamentos</p>
+              <p className="mt-1 text-sm text-slate-600">Laboratórios Nossa Senhora da Penha e Alfa Diagnóstico</p>
+              <p className="powered-by mt-1">
+                Powered by <span className="font-medium text-slate-700">Algoriza</span>
+              </p>
+            </div>
+          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <nav className="mr-1 flex rounded-lg border border-white/15 bg-white/10 p-1 text-sm">
+          <div className="flex flex-1 flex-col gap-3 xl:items-end">
+            <nav className="flex flex-wrap items-center gap-2">
               {navItems.map((item) => {
                 const active = pathname === item.href;
 
@@ -52,13 +53,12 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                   return (
                     <span
                       key={item.href}
-                      aria-disabled="true"
-                      title="Funcao em desenvolvimento"
-                      className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium text-white/55"
+                      title="Função em desenvolvimento"
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-400"
                     >
                       <span>{item.label}</span>
                       {item.badge ? (
-                        <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/70">
+                        <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500">
                           {item.badge}
                         </span>
                       ) : null}
@@ -70,8 +70,10 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`rounded-md px-3 py-1.5 font-medium transition ${
-                      active ? "bg-white text-brand-forest" : "text-white/85 hover:bg-white/10 hover:text-white"
+                    className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
+                      active
+                        ? "border-brand-emerald/30 bg-brand-mint text-brand-forest"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-brand-emerald/30 hover:bg-brand-mint/60"
                     }`}
                   >
                     {item.label}
@@ -80,31 +82,34 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
               })}
             </nav>
 
-            {realtimeState ? (
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-brand-mint">
-                Realtime: {realtimeState}
-              </span>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {realtimeState ? (
+                <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+                  <Activity className="h-4 w-4 text-brand-emerald" />
+                  Sincronização: {realtimeState}
+                </span>
+              ) : null}
 
-            <div className="flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-2 text-sm">
-              <Hammer className="h-4 w-4 text-brand-mint" />
-              <div>
-                <span className="block text-[11px] uppercase tracking-[0.08em] text-white/65">Validador atual</span>
-                <span className="block font-medium text-white">{validatorName || "Usuario sem nome configurado"}</span>
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm">
+                <Hammer className="h-4 w-4 text-brand-emerald" />
+                <div>
+                  <span className="block text-[11px] uppercase tracking-[0.08em] text-slate-500">Validador atual</span>
+                  <span className="block font-medium text-slate-800">{validatorName || "Usuário sem nome configurado"}</span>
+                </div>
               </div>
-            </div>
 
-            {onRefresh ? (
-              <button className="btn border border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={onRefresh}>
-                <RefreshCw className="h-4 w-4" />
-                Atualizar
+              {onRefresh ? (
+                <button className="btn btn-secondary" onClick={onRefresh}>
+                  <RefreshCw className="h-4 w-4" />
+                  Atualizar
+                </button>
+              ) : null}
+
+              <button className="btn btn-secondary" onClick={logout}>
+                <LogOut className="h-4 w-4" />
+                Sair
               </button>
-            ) : null}
-
-            <button className="btn border border-white/20 bg-white text-brand-forest hover:bg-brand-mint" onClick={logout}>
-              <LogOut className="h-4 w-4" />
-              Sair
-            </button>
+            </div>
           </div>
         </div>
       </header>

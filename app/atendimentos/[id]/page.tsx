@@ -90,7 +90,7 @@ function AtendimentoPageContent() {
         if (refreshed) currentAtendimento = refreshed as Atendimento;
       }
     } else if (currentAtendimento.status === "em_validacao") {
-      setWarning("Este atendimento já estava em validação. Confirme se outra pessoa não está editando ao mesmo tempo.");
+      setWarning("Este atendimento já estava em validação. Vale confirmar se outra pessoa não está editando ao mesmo tempo.");
     }
 
     const { data: examesData, error: examesError } = await supabase
@@ -123,7 +123,12 @@ function AtendimentoPageContent() {
     if (!atendimento) return;
     setSaving(true);
     setError(null);
-    const { data, error: updateError } = await supabase.from("atendimentos").update(patch).eq("id", atendimento.id).select("id").maybeSingle();
+    const { data, error: updateError } = await supabase
+      .from("atendimentos")
+      .update(patch)
+      .eq("id", atendimento.id)
+      .select("id")
+      .maybeSingle();
     if (updateError) setError(updateError.message);
     else if (!data) setError("Nenhum atendimento foi atualizado. Recarregue a página e tente novamente.");
     await loadAll();
@@ -133,7 +138,12 @@ function AtendimentoPageContent() {
   async function saveExame(exameId: string, patch: Partial<AtendimentoExame>) {
     setSaving(true);
     setError(null);
-    const { data, error: updateError } = await supabase.from("atendimento_exames").update(patch).eq("id", exameId).select("id").maybeSingle();
+    const { data, error: updateError } = await supabase
+      .from("atendimento_exames")
+      .update(patch)
+      .eq("id", exameId)
+      .select("id")
+      .maybeSingle();
     if (updateError) setError(updateError.message);
     else if (!data) setError("Nenhum exame foi atualizado. Recarregue a página e tente novamente.");
     await loadAll();
@@ -142,6 +152,7 @@ function AtendimentoPageContent() {
 
   async function validate() {
     if (!atendimento) return;
+
     const currentIncludedExams = exames.filter((exame) => exame.incluido !== false);
     if (currentIncludedExams.length === 0) {
       setError("Não é possível validar sem pelo menos um exame incluído no orçamento.");
@@ -157,6 +168,7 @@ function AtendimentoPageContent() {
 
     setActionLoading(true);
     setError(null);
+
     const { data: validatedRecord, error: updateError } = await supabase
       .from("atendimentos")
       .update({
@@ -188,12 +200,13 @@ function AtendimentoPageContent() {
 
         if (!webhookResponse.ok) {
           const detail = await webhookResponse.text();
-          setWarning(`Atendimento validado, mas o webhook não confirmou disparo: ${detail}`);
+          setWarning(`Atendimento validado, mas o webhook não confirmou o disparo: ${detail}`);
         }
       } catch (webhookError) {
         setWarning(`Atendimento validado, mas houve falha ao chamar o webhook: ${String(webhookError)}`);
       }
     }
+
     setValidateOpen(false);
     await loadAll();
     setActionLoading(false);
@@ -203,6 +216,7 @@ function AtendimentoPageContent() {
     if (!atendimento) return;
     setActionLoading(true);
     setError(null);
+
     const { error: updateError } = await supabase
       .from("atendimentos")
       .update({ status: "rejeitado" })
@@ -210,6 +224,7 @@ function AtendimentoPageContent() {
       .eq("status", "em_validacao");
 
     if (updateError) setError(updateError.message);
+
     setRejectOpen(false);
     await loadAll();
     setActionLoading(false);
@@ -218,7 +233,9 @@ function AtendimentoPageContent() {
   if (loading) {
     return (
       <AppShell realtimeState={realtime.state}>
-        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">Carregando atendimento...</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-600">
+          Carregando atendimento...
+        </div>
       </AppShell>
     );
   }
@@ -226,7 +243,7 @@ function AtendimentoPageContent() {
   if (error && !atendimento) {
     return (
       <AppShell onRefresh={loadAll} realtimeState={realtime.state}>
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>
       </AppShell>
     );
   }
@@ -235,7 +252,9 @@ function AtendimentoPageContent() {
 
   const includedExams = exames.filter((exame) => exame.incluido !== false);
   const total = parseCurrency(atendimento.total_validado);
-  const validateDisabledReason = includedExams.length === 0 ? "Não é possível validar sem pelo menos um exame incluído no orçamento." : null;
+  const validateDisabledReason =
+    includedExams.length === 0 ? "não há nenhum exame incluído no orçamento." : null;
+
   const validationWarnings = [
     !validatorName ? "Usuário autenticado sem nome configurado." : null,
     total === null ? "Total validado ainda não calculado." : null,
@@ -247,19 +266,23 @@ function AtendimentoPageContent() {
 
   return (
     <AppShell onRefresh={loadAll} realtimeState={realtime.state}>
-      <div className="space-y-4">
-        {error ? <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
-        {warning ? <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{warning}</div> : null}
+      <div className="space-y-5">
+        {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
+        {warning ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{warning}</div>
+        ) : null}
+
         {realtime.changed ? (
-          <div className="flex items-center justify-between rounded-lg border border-brand-teal/20 bg-brand-teal/10 p-4 text-sm text-brand-forest">
+          <div className="flex items-center justify-between rounded-2xl border border-brand-teal/20 bg-brand-teal/10 p-4 text-sm text-brand-forest">
             <span>Este atendimento recebeu atualizações em tempo real.</span>
             <button className="font-semibold" onClick={realtime.clearChanged}>
               Ocultar aviso
             </button>
           </div>
         ) : null}
+
         {READONLY_STATUS.has(atendimento.status) ? (
-          <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
             Este atendimento está finalizado nesta versão e abriu em modo somente leitura.
           </div>
         ) : null}
@@ -273,16 +296,19 @@ function AtendimentoPageContent() {
         />
 
         {!readOnly && validateDisabledReason ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
-            {validateDisabledReason}
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+            Antes de validar, precisamos corrigir este ponto: {validateDisabledReason}
           </div>
         ) : null}
 
-        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-          <div className="space-y-4">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-5">
             <PatientForm atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
             <PrescriptionPanel atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
-            <TermsNotFoundAlert terms={termsAsArray(atendimento.termos_nao_encontrados)} onPickTerm={setCatalogInitialSearch} />
+            <TermsNotFoundAlert
+              terms={termsAsArray(atendimento.termos_nao_encontrados)}
+              onPickTerm={setCatalogInitialSearch}
+            />
             <CatalogAutocomplete
               atendimentoId={atendimento.id}
               exames={exames}
@@ -293,22 +319,28 @@ function AtendimentoPageContent() {
             />
             <ExamList exames={exames} readOnly={readOnly} saving={saving} onSave={saveExame} />
           </div>
-          <div className="space-y-4">
+
+          <div className="space-y-5">
             <TotalSummary atendimento={atendimento} />
+
             <section className="section">
-              <h2 className="text-base font-semibold text-slate-950">Rastreio</h2>
-              <dl className="mt-3 space-y-2 text-sm">
+              <h2 className="text-lg font-semibold text-slate-950">Rastreio</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Histórico simples do que já aconteceu com este atendimento.
+              </p>
+
+              <dl className="mt-4 space-y-3 text-sm">
                 <div>
                   <dt className="field-label">Validado por</dt>
-                  <dd>{atendimento.validado_por || "-"}</dd>
+                  <dd className="text-slate-900">{atendimento.validado_por || "Ainda não validado"}</dd>
                 </div>
                 <div>
                   <dt className="field-label">Validado em</dt>
-                  <dd>{formatDate(atendimento.validado_em)}</dd>
+                  <dd className="text-slate-900">{formatDate(atendimento.validado_em)}</dd>
                 </div>
                 <div>
                   <dt className="field-label">Enviado em</dt>
-                  <dd>{formatDate(atendimento.enviado_em)}</dd>
+                  <dd className="text-slate-900">{formatDate(atendimento.enviado_em)}</dd>
                 </div>
               </dl>
             </section>
