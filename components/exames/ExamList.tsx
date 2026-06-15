@@ -11,19 +11,17 @@ interface ExamListProps {
 export function ExamList({ exames, readOnly, saving, onSave }: ExamListProps) {
   return (
     <section className="section">
-      <div className="mb-5">
+      <div className="mb-3">
         <h2 className="section-title">Exames do orçamento</h2>
-        <p className="section-copy">
-          A lista abaixo prioriza leitura rápida. Os campos de edição continuam disponíveis sem deixar a tela pesada.
-        </p>
+        <p className="section-copy">Revise, inclua ou ajuste valores sem perder a leitura rápida do orçamento.</p>
       </div>
 
       {exames.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
           Nenhum exame vinculado a este atendimento.
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {exames.map((exame) => (
             <ExamRow key={exame.id} exame={exame} readOnly={readOnly} saving={saving} onSave={onSave} />
           ))}

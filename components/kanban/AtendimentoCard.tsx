@@ -19,8 +19,9 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const total = atendimento.total_validado ?? atendimento.total_bruto;
-  const hasMissingTerms =
-    Array.isArray(atendimento.termos_nao_encontrados) && atendimento.termos_nao_encontrados.length > 0;
+  const missingCount = Array.isArray(atendimento.termos_nao_encontrados)
+    ? atendimento.termos_nao_encontrados.length
+    : 0;
 
   useEffect(() => {
     function handleClick(event: MouseEvent | globalThis.MouseEvent) {
@@ -29,10 +30,7 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
       setMenuOpen(false);
     }
 
-    if (menuOpen) {
-      window.addEventListener("click", handleClick);
-    }
-
+    if (menuOpen) window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, [menuOpen]);
 
@@ -46,9 +44,7 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
     if (!ok) return;
 
     setCancelling(true);
-
     const { error } = await supabase.from("atendimentos").update({ status: "cancelado" }).eq("id", atendimento.id);
-
     setCancelling(false);
 
     if (error) {
@@ -61,16 +57,18 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
   }
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 transition hover:border-brand-emerald/30 hover:shadow-md hover:shadow-brand-forest/10">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium tracking-[0.04em] text-slate-500">{atendimento.protocolo || "Sem protocolo"}</p>
-          <h3 className="mt-1 text-lg font-semibold leading-tight text-slate-950">
+    <article className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm shadow-slate-900/5 transition hover:border-brand-emerald/30 hover:shadow-md hover:shadow-brand-forest/10">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <Link href={`/atendimentos/${atendimento.id}`} className="min-w-0 flex-1">
+          <p className="truncate text-xs font-medium tracking-[0.03em] text-slate-500">
+            {atendimento.protocolo || "Sem protocolo"}
+          </p>
+          <h3 className="mt-0.5 truncate text-sm font-semibold leading-tight text-slate-950">
             {atendimento.paciente_nome || "Paciente não informado"}
           </h3>
-        </div>
+        </Link>
 
-        <div className="flex items-start gap-2">
+        <div className="flex shrink-0 items-start gap-1.5">
           <StatusBadge status={atendimento.status} />
           <div className="relative" ref={menuRef}>
             <button
@@ -80,7 +78,7 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
                 event.stopPropagation();
                 setMenuOpen((current) => !current);
               }}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-brand-emerald/25 hover:bg-brand-mint/60 hover:text-brand-forest"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-brand-emerald/25 hover:bg-brand-mint/60 hover:text-brand-forest"
               aria-label="Abrir ações do card"
               title="Ações"
             >
@@ -88,10 +86,10 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
             </button>
 
             {menuOpen ? (
-              <div className="menu-surface absolute right-0 top-11 z-20 min-w-[180px]">
+              <div className="menu-surface absolute right-0 top-8 z-20 min-w-[170px]">
                 <Link
                   href={`/atendimentos/${atendimento.id}`}
-                  className="block rounded-lg px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+                  className="block rounded-md px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
                 >
                   Abrir detalhes
                 </Link>
@@ -99,7 +97,7 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
                   type="button"
                   onClick={handleCancel}
                   disabled={cancelling}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
                 >
                   <XCircle className="h-4 w-4" />
                   {cancelling ? "Cancelando..." : "Cancelar card"}
@@ -111,31 +109,26 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
       </div>
 
       <Link href={`/atendimentos/${atendimento.id}`} className="block">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="soft-card py-3">
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <Phone className="h-4 w-4 text-brand-emerald" />
-              <span>{formatPhone(atendimento.telefone)}</span>
-            </div>
+        <div className="grid gap-1.5 text-xs text-slate-600">
+          <div className="flex items-center gap-1.5">
+            <Phone className="h-3.5 w-3.5 text-brand-emerald" />
+            <span className="truncate">{formatPhone(atendimento.telefone)}</span>
           </div>
-
-          <div className="soft-card py-3">
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <CalendarClock className="h-4 w-4 text-brand-emerald" />
-              <span>{formatDate(atendimento.created_at)}</span>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <CalendarClock className="h-3.5 w-3.5 text-brand-emerald" />
+            <span className="truncate">{formatDate(atendimento.created_at)}</span>
           </div>
         </div>
 
-        <div className="mt-3 rounded-xl border border-brand-emerald/10 bg-[linear-gradient(180deg,#f8fcfa_0%,#f2f8f5_100%)] px-4 py-3">
-          <p className="text-xs font-medium text-slate-500">Total atual</p>
-          <p className="mt-1 text-xl font-semibold tracking-tight text-brand-forest">{formatCurrency(total)}</p>
+        <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-brand-emerald/10 bg-[linear-gradient(180deg,#f8fcfa_0%,#f2f8f5_100%)] px-3 py-2">
+          <span className="text-xs font-medium text-slate-500">Total</span>
+          <span className="text-sm font-semibold tracking-tight text-brand-forest">{formatCurrency(total)}</span>
         </div>
 
-        {hasMissingTerms ? (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Termos não encontrados
+        {missingCount > 0 ? (
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800">
+            <AlertCircle className="h-3 w-3" />
+            {missingCount} termo{missingCount === 1 ? "" : "s"} pendente{missingCount === 1 ? "" : "s"}
           </div>
         ) : null}
       </Link>

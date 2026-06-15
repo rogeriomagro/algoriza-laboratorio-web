@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { AppShell } from "@/components/layout/AppShell";
 import { AtendimentoHeader } from "@/components/atendimento/AtendimentoHeader";
@@ -35,6 +35,7 @@ function sortExames(exames: AtendimentoExame[]) {
 
 function AtendimentoPageContent() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = params.id;
   const { validatorName } = useValidatorName();
 
@@ -48,6 +49,7 @@ function AtendimentoPageContent() {
   const [catalogInitialSearch, setCatalogInitialSearch] = useState("");
   const [validateOpen, setValidateOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
 
   const loadAll = useCallback(async () => {
     setError(null);
@@ -230,6 +232,31 @@ function AtendimentoPageContent() {
     setActionLoading(false);
   }
 
+  async function returnToWaiting() {
+    if (!atendimento) return;
+    setActionLoading(true);
+    setError(null);
+
+    const { error: updateError } = await supabase
+      .from("atendimentos")
+      .update({ status: "aguardando_validacao" })
+      .eq("id", atendimento.id)
+      .eq("status", "em_validacao");
+
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setReturnOpen(false);
+      setActionLoading(false);
+      router.push("/");
+      return;
+    }
+
+    setReturnOpen(false);
+    await loadAll();
+    setActionLoading(false);
+  }
+
   if (loading) {
     return (
       <AppShell realtimeState={realtime.state}>
@@ -293,6 +320,7 @@ function AtendimentoPageContent() {
           validateDisabledReason={validateDisabledReason}
           onValidate={() => setValidateOpen(true)}
           onReject={() => setRejectOpen(true)}
+          onReturnToWaiting={() => setReturnOpen(true)}
         />
 
         {!readOnly && validateDisabledReason ? (
@@ -301,8 +329,8 @@ function AtendimentoPageContent() {
           </div>
         ) : null}
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-4">
             <PatientForm atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
             <PrescriptionPanel atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
             <TermsNotFoundAlert
@@ -320,7 +348,7 @@ function AtendimentoPageContent() {
             <ExamList exames={exames} readOnly={readOnly} saving={saving} onSave={saveExame} />
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <TotalSummary atendimento={atendimento} />
 
             <section className="section">
@@ -385,6 +413,16 @@ function AtendimentoPageContent() {
         loading={actionLoading}
         onCancel={() => setRejectOpen(false)}
         onConfirm={reject}
+      />
+
+      <ConfirmDialog
+        open={returnOpen}
+        title="Retornar para aguardando"
+        message="O atendimento voltará para a coluna Aguardando e poderá ser assumido novamente depois."
+        confirmLabel="Retornar"
+        loading={actionLoading}
+        onCancel={() => setReturnOpen(false)}
+        onConfirm={returnToWaiting}
       />
     </AppShell>
   );
