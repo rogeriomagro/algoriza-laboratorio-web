@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useSession } from "@/hooks/useSession";
 
-const STORAGE_KEY = "laboratorio.validatorName";
+function toDisplayName(email?: string | null) {
+  if (!email) return "";
+
+  return email
+    .split("@")[0]
+    .replace(/[._-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
+}
 
 export function useValidatorName() {
-  const [validatorName, setValidatorName] = useState("");
+  const { session, loading } = useSession();
 
-  useEffect(() => {
-    setValidatorName(window.localStorage.getItem(STORAGE_KEY) || "");
-  }, []);
+  const validatorName = useMemo(() => {
+    const metadata = session?.user?.user_metadata ?? {};
+    return metadata.full_name || metadata.name || toDisplayName(session?.user?.email);
+  }, [session]);
 
-  function updateValidatorName(value: string) {
-    setValidatorName(value);
-    window.localStorage.setItem(STORAGE_KEY, value);
-  }
-
-  return { validatorName, setValidatorName: updateValidatorName };
+  return { validatorName, loading };
 }

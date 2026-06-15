@@ -237,7 +237,7 @@ function AtendimentoPageContent() {
   const total = parseCurrency(atendimento.total_validado);
   const validateDisabledReason = includedExams.length === 0 ? "Não é possível validar sem pelo menos um exame incluído no orçamento." : null;
   const validationWarnings = [
-    !validatorName ? "Validador atual não preenchido." : null,
+    !validatorName ? "Usuário autenticado sem nome configurado." : null,
     total === null ? "Total validado ainda não calculado." : null,
     total === 0 ? "Total validado está zerado." : null,
     includedExams.length === 0 ? "Nenhum exame incluído no orçamento." : null,
@@ -328,7 +328,7 @@ function AtendimentoPageContent() {
           <div className="space-y-2">
             <p>Telefone: {atendimento.telefone || "-"}</p>
             <p>Total validado: {formatCurrency(atendimento.total_validado)}</p>
-            <p>Validador atual: {validatorName || "não preenchido"}</p>
+            <p>Validador atual: {validatorName || "Usuário sem nome configurado"}</p>
             {validationWarnings.length > 0 ? (
               <ul className="list-disc space-y-1 pl-5 text-amber-800">
                 {validationWarnings.map((item) => (

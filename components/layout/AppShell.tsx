@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, RefreshCw } from "lucide-react";
+import { Hammer, LogOut, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useValidatorName } from "@/hooks/useValidatorName";
 
@@ -15,7 +15,7 @@ interface AppShellProps {
 export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { validatorName, setValidatorName } = useValidatorName();
+  const { validatorName } = useValidatorName();
 
   async function logout() {
     await supabase.auth.signOut();
@@ -23,8 +23,8 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
   }
 
   const navItems = [
-    { href: "/", label: "Kanban" },
-    { href: "/sugestoes-base", label: "Sugestões da base" }
+    { href: "/", label: "Kanban", disabled: false },
+    { href: "/sugestoes-base", label: "Sugestões da base", disabled: true, badge: "Em desenvolvimento" }
   ];
 
   return (
@@ -46,6 +46,25 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
             <nav className="mr-1 flex rounded-lg border border-white/15 bg-white/10 p-1 text-sm">
               {navItems.map((item) => {
                 const active = pathname === item.href;
+
+                if (item.disabled) {
+                  return (
+                    <span
+                      key={item.href}
+                      aria-disabled="true"
+                      title="Função em desenvolvimento"
+                      className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium text-white/55"
+                    >
+                      <span>{item.label}</span>
+                      {item.badge ? (
+                        <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/70">
+                          {item.badge}
+                        </span>
+                      ) : null}
+                    </span>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.href}
@@ -64,15 +83,13 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                 Realtime: {realtimeState}
               </span>
             ) : null}
-            <label className="flex items-center gap-2 text-sm">
-              <span className="text-white/80">Validador atual</span>
-              <input
-                className="w-44 rounded-md border border-white/20 bg-white px-2 py-1 text-sm text-brand-charcoal outline-none focus:border-brand-mint focus:ring-2 focus:ring-white/20"
-                value={validatorName}
-                onChange={(event) => setValidatorName(event.target.value)}
-                placeholder="Nome"
-              />
-            </label>
+            <div className="flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-2 text-sm">
+              <Hammer className="h-4 w-4 text-brand-mint" />
+              <div>
+                <span className="block text-[11px] uppercase tracking-[0.08em] text-white/65">Validador atual</span>
+                <span className="block font-medium text-white">{validatorName || "Usuário sem nome configurado"}</span>
+              </div>
+            </div>
             {onRefresh ? (
               <button className="btn border border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={onRefresh}>
                 <RefreshCw className="h-4 w-4" />
