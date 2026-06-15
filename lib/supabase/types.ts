@@ -73,6 +73,17 @@ export interface CatalogoExame {
   jejum_horas: number | string | null;
 }
 
+export interface KanbanUsuario {
+  id: string;
+  auth_user_id: string;
+  nome: string;
+  email: string;
+  ativo: boolean;
+  criado_por: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export type SugestaoCatalogoStatus = "pendente" | "aprovado" | "rejeitado";
 export type SugestaoCatalogoRisco = "baixo" | "medio" | "alto";
 

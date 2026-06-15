@@ -24,7 +24,8 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
 
   const navItems = [
     { href: "/", label: "Kanban", disabled: false },
-    { href: "/sugestoes-base", label: "Sugestões da base", disabled: true, badge: "Em desenvolvimento" }
+    { href: "/usuarios", label: "Usuarios", disabled: false },
+    { href: "/sugestoes-base", label: "Sugestoes da base", disabled: true, badge: "Em desenvolvimento" },
   ];
 
   return (
@@ -37,8 +38,8 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
               <img src="/brand/brand-mark.png" alt="" className="h-9 w-9 object-contain" />
             </span>
             <span>
-              <span className="block text-base font-semibold text-white">Validação de Orçamentos</span>
-              <span className="block text-xs text-brand-mint">Laboratórios Nossa Senhora da Penha e Alfa Diagnóstico</span>
+              <span className="block text-base font-semibold text-white">Validacao de Orcamentos</span>
+              <span className="block text-xs text-brand-mint">Laboratorios Nossa Senhora da Penha e Alfa Diagnostico</span>
             </span>
           </Link>
 
@@ -52,7 +53,7 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                     <span
                       key={item.href}
                       aria-disabled="true"
-                      title="Função em desenvolvimento"
+                      title="Funcao em desenvolvimento"
                       className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 font-medium text-white/55"
                     >
                       <span>{item.label}</span>
@@ -78,24 +79,28 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                 );
               })}
             </nav>
+
             {realtimeState ? (
               <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-brand-mint">
                 Realtime: {realtimeState}
               </span>
             ) : null}
+
             <div className="flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-2 text-sm">
               <Hammer className="h-4 w-4 text-brand-mint" />
               <div>
                 <span className="block text-[11px] uppercase tracking-[0.08em] text-white/65">Validador atual</span>
-                <span className="block font-medium text-white">{validatorName || "Usuário sem nome configurado"}</span>
+                <span className="block font-medium text-white">{validatorName || "Usuario sem nome configurado"}</span>
               </div>
             </div>
+
             {onRefresh ? (
               <button className="btn border border-white/20 bg-white/10 text-white hover:bg-white/20" onClick={onRefresh}>
                 <RefreshCw className="h-4 w-4" />
                 Atualizar
               </button>
             ) : null}
+
             <button className="btn border border-white/20 bg-white text-brand-forest hover:bg-brand-mint" onClick={logout}>
               <LogOut className="h-4 w-4" />
               Sair
@@ -103,6 +108,7 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
           </div>
         </div>
       </header>
+
       <main className="mx-auto max-w-[1600px] px-4 py-5">{children}</main>
     </div>
   );
