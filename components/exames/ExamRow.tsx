@@ -19,6 +19,8 @@ interface ExamRowProps {
 }
 
 export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
+  const [nome, setNome] = useState("");
+  const [sku, setSku] = useState("");
   const [preco, setPreco] = useState("");
   const [prazoDias, setPrazoDias] = useState("");
   const [jejumHoras, setJejumHoras] = useState("");
@@ -28,6 +30,8 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    setNome(asString(exame.nome));
+    setSku(asString(exame.sku));
     setPreco(parseCurrency(exame.preco)?.toString().replace(".", ",") || "");
     setPrazoDias(asString(exame.prazo_dias));
     setJejumHoras(asString(exame.jejum_horas));
@@ -41,15 +45,20 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
   async function save() {
     setError(null);
 
+    const nomeNormalizado = nome.trim();
+    const skuNormalizado = sku.trim();
     const precoNumber = toNumberOrNull(preco);
     const prazoNumber = toNumberOrNull(prazoDias);
     const jejumNumber = toNumberOrNull(jejumHoras);
 
-    if (precoNumber !== null && precoNumber < 0) return setError("O valor não pode ser negativo.");
-    if (prazoNumber !== null && prazoNumber < 0) return setError("O prazo não pode ser negativo.");
-    if (jejumNumber !== null && jejumNumber < 0) return setError("O jejum não pode ser negativo.");
+    if (!nomeNormalizado) return setError("Informe o nome do exame.");
+    if (precoNumber !== null && precoNumber < 0) return setError("O valor nao pode ser negativo.");
+    if (prazoNumber !== null && prazoNumber < 0) return setError("O prazo nao pode ser negativo.");
+    if (jejumNumber !== null && jejumNumber < 0) return setError("O jejum nao pode ser negativo.");
 
     await onSave(exame.id, {
+      nome: nomeNormalizado,
+      sku: skuNormalizado || null,
       preco: precoNumber,
       prazo_dias: prazoNumber,
       jejum_horas: jejumNumber,
@@ -80,7 +89,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className={`text-sm font-semibold ${incluido ? "text-slate-950" : "text-slate-500 line-through"}`}>
-                {exame.nome || "Exame sem nome"}
+                {nome || "Exame sem nome"}
               </h3>
 
               {exame.editado_manual ? (
@@ -103,7 +112,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
           </div>
 
           <label className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 lg:min-w-[150px]">
-            <span>Incluído</span>
+            <span>Incluido</span>
             <input
               type="checkbox"
               checked={incluido}
@@ -113,16 +122,28 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
           </label>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px]">
           <div className="grid gap-2 md:grid-cols-3">
+            <label className="block md:col-span-2">
+              <span className="field-label">Nome do exame</span>
+              <input className="field-input mt-1" value={nome} onChange={(event) => setNome(event.target.value)} disabled={readOnly} />
+            </label>
+
             <label className="block">
-              <span className="field-label">Preço</span>
+              <span className="field-label">SKU</span>
+              <input className="field-input mt-1" value={sku} onChange={(event) => setSku(event.target.value)} disabled={readOnly} />
+            </label>
+
+            <label className="block">
+              <span className="field-label">Preco</span>
               <input className="field-input mt-1" value={preco} onChange={(event) => setPreco(event.target.value)} disabled={readOnly} />
             </label>
+
             <label className="block">
               <span className="field-label">Prazo dias</span>
               <input className="field-input mt-1" value={prazoDias} onChange={(event) => setPrazoDias(event.target.value)} disabled={readOnly} />
             </label>
+
             <label className="block">
               <span className="field-label">Jejum horas</span>
               <input className="field-input mt-1" value={jejumHoras} onChange={(event) => setJejumHoras(event.target.value)} disabled={readOnly} />
@@ -143,10 +164,11 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <p className="field-label">Resumo</p>
             <div className="mt-1.5 space-y-1 text-xs text-slate-700">
-              <p><strong className="font-medium text-slate-900">SKU:</strong> {exame.sku || "Não informado"}</p>
-              <p><strong className="font-medium text-slate-900">Valor:</strong> {formatCurrency(exame.preco)}</p>
-              <p><strong className="font-medium text-slate-900">Prazo:</strong> {formatDays(exame.prazo_dias)}</p>
-              <p><strong className="font-medium text-slate-900">Jejum:</strong> {formatHours(exame.jejum_horas)}</p>
+              <p><strong className="font-medium text-slate-900">Nome:</strong> {nome || "Nao informado"}</p>
+              <p><strong className="font-medium text-slate-900">SKU:</strong> {sku || "Nao informado"}</p>
+              <p><strong className="font-medium text-slate-900">Valor:</strong> {preco.trim() ? formatCurrency(toNumberOrNull(preco)) : "Nao informado"}</p>
+              <p><strong className="font-medium text-slate-900">Prazo:</strong> {formatDays(toNumberOrNull(prazoDias))}</p>
+              <p><strong className="font-medium text-slate-900">Jejum:</strong> {formatHours(toNumberOrNull(jejumHoras))}</p>
             </div>
           </div>
         </div>
@@ -161,7 +183,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
 
           <button type="button" className="btn btn-secondary" onClick={() => setExpanded((current) => !current)}>
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            {expanded ? "Ocultar detalhes" : "Detalhes técnicos"}
+            {expanded ? "Ocultar detalhes" : "Detalhes tecnicos"}
           </button>
         </div>
 
@@ -173,20 +195,20 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
                 Origem do match
               </div>
               <div className="space-y-1.5 text-sm text-slate-600">
-                <p><strong className="font-medium text-slate-900">Termo:</strong> {exame.termo_original || "Não informado"}</p>
+                <p><strong className="font-medium text-slate-900">Termo:</strong> {exame.termo_original || "Nao informado"}</p>
                 <p><strong className="font-medium text-slate-900">Tipo:</strong> {helperText}</p>
-                <p><strong className="font-medium text-slate-900">Score:</strong> {asString(exame.score) || "Não informado"}</p>
+                <p><strong className="font-medium text-slate-900">Score:</strong> {asString(exame.score) || "Nao informado"}</p>
               </div>
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
               <div className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <FlaskConical className="h-4 w-4 text-brand-emerald" />
-                Situação do exame
+                Situacao do exame
               </div>
               <p className="text-sm leading-5 text-slate-600">
                 {incluido
-                  ? "Incluído normalmente no total validado."
+                  ? "Incluido normalmente no total validado."
                   : "Mantido no atendimento, mas fora do total enquanto estiver desmarcado."}
               </p>
             </div>
