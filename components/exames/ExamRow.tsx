@@ -1,14 +1,39 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp, ClipboardList, FlaskConical, Pencil, Save, X } from "lucide-react";
-import type { AtendimentoExame } from "@/lib/supabase/types";
+import {
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ClipboardList,
+  FlaskConical,
+  Pencil,
+  Save,
+  Search,
+  X,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import type { AtendimentoExame, CatalogoExame } from "@/lib/supabase/types";
 import { asString, describeMatch, formatCurrency, formatDays, formatHours, parseCurrency } from "@/lib/format";
 
 function toNumberOrNull(value: string): number | null {
   if (value.trim() === "") return null;
   const parsed = Number(value.replace(",", "."));
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function safeSearchTerm(value: string) {
+  return value.replace(/[%,()]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function dedupeCatalogResults(items: CatalogoExame[]) {
+  const map = new Map<string, CatalogoExame>();
+  for (const item of items) {
+    const key = `${item.sku || ""}::${item.nome}`;
+    if (!map.has(key)) map.set(key, item);
+  }
+  return Array.from(map.values());
 }
 
 interface ExamRowProps {
@@ -25,10 +50,15 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
   const [prazoDias, setPrazoDias] = useState("");
   const [jejumHoras, setJejumHoras] = useState("");
   const [preparo, setPreparo] = useState("");
+  const [termoOriginal, setTermoOriginal] = useState("");
+  const [matchPor, setMatchPor] = useState<string | null>(null);
   const [incluido, setIncluido] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [catalogResults, setCatalogResults] = useState<CatalogoExame[]>([]);
+  const [searchingCatalog, setSearchingCatalog] = useState(false);
+  const [searchingOpen, setSearchingOpen] = useState(false);
 
   useEffect(() => {
     setNome(asString(exame.nome));
@@ -37,13 +67,71 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
     setPrazoDias(asString(exame.prazo_dias));
     setJejumHoras(asString(exame.jejum_horas));
     setPreparo(asString(exame.preparo));
+    setTermoOriginal(asString(exame.termo_original));
+    setMatchPor(exame.match_por);
     setIncluido(exame.incluido !== false);
     setError(null);
     setIsEditing(false);
+    setCatalogResults([]);
+    setSearchingOpen(false);
   }, [exame]);
 
-  const helperText = useMemo(() => describeMatch(exame.match_por), [exame.match_por]);
+  const helperText = useMemo(() => describeMatch(matchPor), [matchPor]);
   const fieldsDisabled = readOnly || !isEditing || saving;
+  const searchTerm = safeSearchTerm(nome);
+
+  useEffect(() => {
+    if (!isEditing) return;
+
+    if (searchTerm.length < 2) {
+      setCatalogResults([]);
+      setSearchingOpen(false);
+      setSearchingCatalog(false);
+      return;
+    }
+
+    let active = true;
+
+    const timeout = window.setTimeout(async () => {
+      setSearchingCatalog(true);
+      setError(null);
+
+      const filter = `nome.ilike.*${searchTerm}*,sku.ilike.*${searchTerm}*,sinonimos.ilike.*${searchTerm}*`;
+
+      const [matchResponse, catalogResponse] = await Promise.all([
+        supabase.rpc("match_termos_exames", { termos: [searchTerm] }),
+        supabase
+          .from("catalogo_exames")
+          .select("sku,nome,sinonimos,preco,material,metodo,preparo,prazo_dias,jejum_horas")
+          .or(filter)
+          .order("nome", { ascending: true })
+          .limit(8),
+      ]);
+
+      if (!active) return;
+
+      const searchError = matchResponse.error || catalogResponse.error;
+
+      if (searchError) {
+        setCatalogResults([]);
+        setSearchingOpen(false);
+        setError(searchError.message);
+      } else {
+        const matched = ((matchResponse.data || []) as CatalogoExame[]).filter((item) => item.nome);
+        const catalog = (catalogResponse.data || []) as CatalogoExame[];
+        const merged = dedupeCatalogResults([...matched, ...catalog]).slice(0, 8);
+        setCatalogResults(merged);
+        setSearchingOpen(merged.length > 0);
+      }
+
+      setSearchingCatalog(false);
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [isEditing, searchTerm]);
 
   function resetDraft() {
     setNome(asString(exame.nome));
@@ -52,6 +140,24 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
     setPrazoDias(asString(exame.prazo_dias));
     setJejumHoras(asString(exame.jejum_horas));
     setPreparo(asString(exame.preparo));
+    setTermoOriginal(asString(exame.termo_original));
+    setMatchPor(exame.match_por);
+    setCatalogResults([]);
+    setSearchingOpen(false);
+    setError(null);
+  }
+
+  function applyCatalogMatch(item: CatalogoExame) {
+    setNome(item.nome);
+    setSku(asString(item.sku));
+    setPreco(item.preco === null || item.preco === undefined ? "" : String(item.preco).replace(".", ","));
+    setPrazoDias(item.prazo_dias === null || item.prazo_dias === undefined ? "" : String(item.prazo_dias));
+    setJejumHoras(item.jejum_horas === null || item.jejum_horas === undefined ? "" : String(item.jejum_horas));
+    setPreparo(asString(item.preparo));
+    setTermoOriginal(searchTerm || item.nome);
+    setMatchPor("manual_catalogo");
+    setCatalogResults([]);
+    setSearchingOpen(false);
     setError(null);
   }
 
@@ -76,6 +182,8 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
       prazo_dias: prazoNumber,
       jejum_horas: jejumNumber,
       preparo,
+      termo_original: termoOriginal || nomeNormalizado,
+      match_por: matchPor || exame.match_por,
       incluido,
       editado_manual: true,
     });
@@ -102,10 +210,58 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <h3 className={`text-sm font-semibold ${incluido ? "text-slate-950" : "text-slate-500 line-through"}`}>
-                {nome || "Exame sem nome"}
-              </h3>
+            <div className="flex flex-wrap items-start gap-1.5">
+              {isEditing && !readOnly ? (
+                <div className="relative min-w-[280px] flex-1">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      className="field-input h-9 w-full rounded-lg border-slate-300 bg-white pl-9 pr-3 text-sm font-semibold text-slate-950"
+                      value={nome}
+                      onChange={(event) => {
+                        setNome(event.target.value);
+                        setSearchingOpen(true);
+                      }}
+                      onFocus={() => {
+                        if (catalogResults.length > 0) setSearchingOpen(true);
+                      }}
+                      placeholder="Editar nome e buscar no catalogo"
+                      disabled={saving}
+                    />
+                  </div>
+
+                  {searchingOpen && (catalogResults.length > 0 || searchingCatalog) ? (
+                    <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg shadow-slate-900/10">
+                      {searchingCatalog ? <div className="px-3 py-2 text-xs text-slate-500">Buscando exames...</div> : null}
+
+                      {!searchingCatalog ? (
+                        <div className="max-h-56 overflow-y-auto py-1">
+                          {catalogResults.map((item) => (
+                            <button
+                              key={`${item.sku || "sem-sku"}-${item.nome}`}
+                              type="button"
+                              className="flex w-full items-start justify-between gap-3 px-3 py-2 text-left transition hover:bg-brand-mint/30"
+                              onClick={() => applyCatalogMatch(item)}
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-slate-900">{item.nome}</p>
+                                <p className="truncate text-xs text-slate-500">
+                                  {item.sku ? `SKU ${item.sku}` : "Sem SKU"} • {formatCurrency(item.preco)}
+                                </p>
+                              </div>
+                              <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-emerald" />
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <h3 className={`text-sm font-semibold ${incluido ? "text-slate-950" : "text-slate-500 line-through"}`}>
+                  {nome || "Exame sem nome"}
+                </h3>
+              )}
 
               {exame.editado_manual ? (
                 <span className="chip border-brand-teal/20 bg-brand-teal/10 text-brand-forest">Editado</span>
@@ -122,12 +278,12 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
             </div>
 
             <p className="mt-1 text-[12px] leading-5 text-slate-600">
-              {exame.termo_original ? `Termo: ${exame.termo_original} · ${helperText}` : helperText}
+              {termoOriginal ? `Termo: ${termoOriginal} • ${helperText}` : helperText}
             </p>
           </div>
 
           <label className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1.5 text-sm text-slate-700 lg:min-w-[142px]">
-            <span>Incluído</span>
+            <span>Incluido</span>
             <input
               type="checkbox"
               checked={incluido}
@@ -150,7 +306,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
             </label>
 
             <label className="block">
-              <span className="field-label">Preço</span>
+              <span className="field-label">Preco</span>
               <input
                 className="field-input mt-1 px-3 py-1.5 text-sm"
                 value={preco}
@@ -237,7 +393,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
 
           <button type="button" className="btn btn-secondary px-3 py-1.5" onClick={() => setExpanded((current) => !current)}>
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            {expanded ? "Ocultar detalhes" : "Detalhes técnicos"}
+            {expanded ? "Ocultar detalhes" : "Detalhes tecnicos"}
           </button>
         </div>
 
@@ -249,20 +405,20 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
                 Origem do match
               </div>
               <div className="space-y-1 text-sm leading-5 text-slate-600">
-                <p><strong className="font-medium text-slate-900">Termo:</strong> {exame.termo_original || "Não informado"}</p>
+                <p><strong className="font-medium text-slate-900">Termo:</strong> {termoOriginal || "Nao informado"}</p>
                 <p><strong className="font-medium text-slate-900">Tipo:</strong> {helperText}</p>
-                <p><strong className="font-medium text-slate-900">Score:</strong> {asString(exame.score) || "Não informado"}</p>
+                <p><strong className="font-medium text-slate-900">Score:</strong> {asString(exame.score) || "Nao informado"}</p>
               </div>
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
               <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <FlaskConical className="h-4 w-4 text-brand-emerald" />
-                Situação do exame
+                Situacao do exame
               </div>
               <p className="text-sm leading-5 text-slate-600">
                 {incluido
-                  ? "Incluído normalmente no total validado."
+                  ? "Incluido normalmente no total validado."
                   : "Mantido no atendimento, mas fora do total enquanto estiver desmarcado."}
               </p>
             </div>
