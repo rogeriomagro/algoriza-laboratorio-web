@@ -33,21 +33,23 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-brand-forest/10 bg-white/95 backdrop-blur">
         <div className="mx-auto max-w-[1600px] px-4 py-2.5">
-          <div className="relative flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pr-0 min-[1366px]:flex-nowrap min-[1366px]:gap-x-4">
-            <div className="flex min-w-0 items-center gap-3 min-[1366px]:shrink min-[1366px]:basis-[30%]">
+          <div className="flex items-center justify-between gap-3 min-[1366px]:flex-nowrap">
+            <div className="flex min-w-0 shrink items-center gap-3">
               <div className="shrink-0">
                 <LabBrand compact />
               </div>
 
-              <div className="min-w-0 max-w-[230px]">
-                <p className="truncate text-[13px] font-semibold leading-tight tracking-tight text-brand-forest min-[1366px]:text-[14px]">
+              <div className="shrink-0">
+                <p className="whitespace-nowrap text-[13px] font-semibold leading-tight tracking-tight text-brand-forest min-[1366px]:text-[14px]">
                   Validação de Orçamentos
                 </p>
-                <p className="truncate text-[11px] text-slate-600 min-[1366px]:text-xs">Penha + Alfa Diagnóstico</p>
+                <p className="whitespace-nowrap text-[11px] text-slate-600 min-[1366px]:text-xs">
+                  Penha + Alfa Diagnóstico
+                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 min-[1366px]:shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <nav className="flex items-center rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
                 {navItems.map((item, index) => {
                   const active = pathname === item.href;
@@ -62,8 +64,8 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                     return (
                       <span
                         key={item.href}
-                        title="Função em desenvolvimento"
-                        className={`border-l border-slate-200 px-3 py-2 text-sm font-medium text-slate-500 first:border-l-0 ${edgeClass}`}
+                        title="Em desenvolvimento"
+                        className={`cursor-not-allowed border-l border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-400 first:border-l-0 ${edgeClass}`}
                       >
                         {item.label}
                       </span>
@@ -85,13 +87,9 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                   );
                 })}
               </nav>
-
-              <span className="rounded-full border border-brand-emerald/15 bg-brand-mint/30 px-2.5 py-1 text-[11px] font-medium text-brand-forest">
-                Em homologação
-              </span>
             </div>
 
-            <div className="flex items-center justify-end gap-2 min-[1366px]:shrink-0">
+            <div className="flex shrink-0 items-center justify-end gap-2">
               {realtimeState ? (
                 <span className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -107,6 +105,10 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                 <ChevronDown className="h-4 w-4 shrink-0 text-brand-forest/60" />
               </div>
 
+              <span className="hidden whitespace-nowrap text-[11px] text-slate-400 min-[1500px]:inline">
+                Powered by <span className="font-medium text-slate-500">Algoriza</span>
+              </span>
+
               {onRefresh ? (
                 <button className="btn btn-secondary h-9 px-3.5 py-0" onClick={onRefresh}>
                   <RefreshCw className="h-4 w-4" />
@@ -119,10 +121,6 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                 Sair
               </button>
             </div>
-
-            <p className="absolute bottom-0 right-0 hidden text-[10px] text-slate-400 min-[1366px]:block">
-              Powered by <span className="font-medium text-slate-500">Algoriza</span>
-            </p>
           </div>
         </div>
       </header>
