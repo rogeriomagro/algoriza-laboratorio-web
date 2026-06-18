@@ -199,6 +199,14 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
     });
   }
 
+  const precoNumber = toNumberOrNull(preco);
+  const precoFmt = preco.trim() ? formatCurrency(precoNumber) : "Não informado";
+  const metaParts = [
+    sku.trim() ? `SKU ${sku.trim()}` : "Sem SKU",
+    `Prazo ${prazoDias.trim() ? formatDays(toNumberOrNull(prazoDias)) : "—"}`,
+    `Jejum ${jejumHoras.trim() ? formatHours(toNumberOrNull(jejumHoras)) : "—"}`,
+  ];
+
   return (
     <article
       className={`rounded-lg border px-3 py-2.5 transition ${
@@ -282,17 +290,32 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
             </p>
           </div>
 
-          <label className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1.5 text-sm text-slate-700 lg:min-w-[142px]">
-            <span>Incluido</span>
-            <input
-              type="checkbox"
-              checked={incluido}
-              disabled={readOnly || saving}
-              onChange={(event) => toggleIncluded(event.target.checked)}
-            />
-          </label>
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            {!isEditing ? (
+              <span className={`text-base font-semibold ${incluido ? "text-brand-forest" : "text-slate-400 line-through"}`}>
+                {precoFmt}
+              </span>
+            ) : null}
+            <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 text-xs text-slate-700">
+              <span>Incluído</span>
+              <input
+                type="checkbox"
+                checked={incluido}
+                disabled={readOnly || saving}
+                onChange={(event) => toggleIncluded(event.target.checked)}
+              />
+            </label>
+          </div>
         </div>
 
+        {!isEditing ? (
+          <div className="space-y-1">
+            <p className="text-xs text-slate-600">{metaParts.join(" · ")}</p>
+            <p className="line-clamp-2 text-[12px] leading-5 text-slate-600">
+              <span className="font-medium text-slate-700">Preparo:</span> {preparo.trim() || "Sem preparo informado"}
+            </p>
+          </div>
+        ) : (
         <div className="grid gap-2.5 xl:grid-cols-[minmax(0,1fr)_220px]">
           <div className="grid gap-2 md:grid-cols-3">
             <label className="block">
@@ -358,6 +381,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
             </div>
           </div>
         </div>
+        )}
 
         {error ? <p className="text-xs text-rose-700">{error}</p> : null}
 
