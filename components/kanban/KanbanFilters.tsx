@@ -13,9 +13,9 @@ export function KanbanFilters({ value, onChange }: KanbanFiltersProps) {
       <label className="block">
         <span className="field-label">Buscar por protocolo, paciente, telefone ou médico</span>
         <div className="relative mt-2">
-          <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
-            className="field-input pl-9"
+            className="field-input !pl-9"
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder="Digite um protocolo, nome, telefone ou médico"

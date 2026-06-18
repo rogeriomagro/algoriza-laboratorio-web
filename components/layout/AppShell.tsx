@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, LogOut, RefreshCw, UserRound } from "lucide-react";
@@ -17,6 +18,7 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
   const router = useRouter();
   const pathname = usePathname();
   const { validatorName } = useValidatorName();
+  const [validatorMenuOpen, setValidatorMenuOpen] = useState(false);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -97,12 +99,41 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                 </span>
               ) : null}
 
-              <div className="inline-flex h-9 max-w-[210px] items-center gap-2 rounded-xl border border-brand-emerald/15 bg-brand-mint/30 px-3 text-sm text-brand-forest shadow-sm shadow-slate-900/5">
-                <UserRound className="h-4 w-4 shrink-0 text-brand-forest/80" />
-                <span className="truncate whitespace-nowrap font-medium">
-                  Validador: {validatorName || "Usuário sem nome"}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-brand-forest/60" />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setValidatorMenuOpen((open) => !open)}
+                  title={`Validador: ${validatorName || "Usuário sem nome"}`}
+                  className="inline-flex h-9 max-w-[210px] items-center gap-2 rounded-xl border border-brand-emerald/15 bg-brand-mint/30 px-3 text-sm text-brand-forest shadow-sm shadow-slate-900/5 transition hover:bg-brand-mint/50"
+                >
+                  <UserRound className="h-4 w-4 shrink-0 text-brand-forest/80" />
+                  <span className="truncate whitespace-nowrap font-medium">
+                    Validador: {validatorName || "Usuário sem nome"}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-brand-forest/60 transition ${validatorMenuOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                {validatorMenuOpen ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-hidden="true"
+                      tabIndex={-1}
+                      className="fixed inset-0 z-40 cursor-default"
+                      onClick={() => setValidatorMenuOpen(false)}
+                    />
+                    <div className="menu-surface absolute right-0 top-[calc(100%+6px)] z-50 min-w-[220px] max-w-[300px]">
+                      <div className="px-3 py-2">
+                        <p className="field-label">Validador</p>
+                        <p className="mt-0.5 break-words text-sm font-medium text-slate-900">
+                          {validatorName || "Usuário sem nome"}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
               </div>
 
               <span className="hidden whitespace-nowrap text-[11px] text-slate-400 min-[1500px]:inline">
