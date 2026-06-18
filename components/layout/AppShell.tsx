@@ -27,6 +27,7 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
 
   const navItems = [
     { href: "/", label: "Kanban", disabled: false },
+    { href: "/calendario", label: "Calendário", disabled: false },
     { href: "/usuarios", label: "Usuários", disabled: false },
     { href: "/sugestoes-base", label: "Base de exames", disabled: true },
   ];
