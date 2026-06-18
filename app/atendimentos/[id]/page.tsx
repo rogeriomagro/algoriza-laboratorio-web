@@ -152,6 +152,34 @@ function AtendimentoPageContent() {
     setSaving(false);
   }
 
+  async function createManualExame(patch: Partial<AtendimentoExame>) {
+    if (!atendimento) return false;
+
+    const nextOrder = exames.length
+      ? Math.max(...exames.map((exame) => exame.ordem ?? 0)) + 1
+      : 1;
+
+    setSaving(true);
+    setError(null);
+
+    const { data, error: insertError } = await supabase
+      .from("atendimento_exames")
+      .insert({
+        atendimento_id: atendimento.id,
+        ...patch,
+        ordem: nextOrder,
+      })
+      .select("id")
+      .maybeSingle();
+
+    if (insertError) setError(insertError.message);
+    else if (!data) setError("O exame manual nao foi inserido. Recarregue a pagina e tente novamente.");
+
+    await loadAll();
+    setSaving(false);
+    return Boolean(data && !insertError);
+  }
+
   async function validate() {
     if (!atendimento) return;
 
@@ -345,7 +373,13 @@ function AtendimentoPageContent() {
               onConsumedInitialSearch={() => setCatalogInitialSearch("")}
               onAdded={loadAll}
             />
-            <ExamList exames={exames} readOnly={readOnly} saving={saving} onSave={saveExame} />
+            <ExamList
+              exames={exames}
+              readOnly={readOnly}
+              saving={saving}
+              onSave={saveExame}
+              onCreate={createManualExame}
+            />
           </div>
 
           <div className="space-y-4">
