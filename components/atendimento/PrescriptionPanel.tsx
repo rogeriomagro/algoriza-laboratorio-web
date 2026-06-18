@@ -32,7 +32,7 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
 
   return (
     <section className="section">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="section-title">Prescrição e contexto</h2>
           <p className="section-copy">
@@ -44,16 +44,16 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
         </button>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="subsection">
-          <div className="mb-4">
+          <div className="mb-3">
             <h3 className="text-base font-semibold text-slate-950">Pedido médico</h3>
             <p className="mt-1 text-sm text-slate-600">
               Dados clínicos mais objetivos ligados ao exame e ao pedido anexado.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <label className="block">
               <span className="field-label">Médico solicitante</span>
               <input
@@ -76,7 +76,7 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
             <label className="block md:col-span-2">
               <span className="field-label">Observações da prescrição</span>
               <textarea
-                className="field-input mt-1 min-h-28"
+                className="field-input mt-1 min-h-[96px]"
                 value={observacoes}
                 onChange={(event) => setObservacoes(event.target.value)}
                 disabled={readOnly}
@@ -86,7 +86,7 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
         </div>
 
         <div className="subsection">
-          <div className="mb-4">
+          <div className="mb-3">
             <h3 className="text-base font-semibold text-slate-950">Notas da conversa</h3>
             <p className="mt-1 text-sm text-slate-600">
               Preferências, restrições e observações operacionais passadas durante o atendimento.
@@ -96,7 +96,7 @@ export function PrescriptionPanel({ atendimento, readOnly, saving, onSave }: Pre
           <label className="block">
             <span className="field-label">Anotações internas</span>
             <textarea
-              className="field-input mt-1 min-h-[216px]"
+              className="field-input mt-1 min-h-[150px]"
               value={observacoesConversa}
               onChange={(event) => setObservacoesConversa(event.target.value)}
               disabled={readOnly}

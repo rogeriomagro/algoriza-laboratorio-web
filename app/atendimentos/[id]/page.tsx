@@ -321,7 +321,7 @@ function AtendimentoPageContent() {
 
   return (
     <AppShell onRefresh={loadAll} realtimeState={realtime.state}>
-      <div className="space-y-5">
+      <div className="space-y-4">
         {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
         {warning ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{warning}</div>
@@ -358,7 +358,7 @@ function AtendimentoPageContent() {
         ) : null}
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <PatientForm atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
             <PrescriptionPanel atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
             <TermsNotFoundAlert
@@ -382,7 +382,7 @@ function AtendimentoPageContent() {
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <TotalSummary atendimento={atendimento} />
 
             <section className="section">

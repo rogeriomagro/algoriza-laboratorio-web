@@ -70,7 +70,7 @@ export function PatientForm({ atendimento, readOnly, saving, onSave }: PatientFo
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         {fields.map((field) => (
           <label key={field.key} className={field.key === "paciente_nome" ? "block xl:col-span-2" : "block"}>
             <span className="field-label">{field.label}</span>
