@@ -36,24 +36,24 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-brand-forest/10 bg-white/95 backdrop-blur">
         <div className="mx-auto max-w-[1600px] px-4 py-2.5">
-          <div className="flex items-center justify-between gap-3 min-[1366px]:flex-nowrap">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <div className="flex min-w-0 shrink items-center gap-3">
               <div className="shrink-0">
                 <LabBrand compact />
               </div>
 
-              <div className="shrink-0">
-                <p className="whitespace-nowrap text-[13px] font-semibold leading-tight tracking-tight text-brand-forest min-[1366px]:text-[14px]">
+              <div className="hidden min-w-0 sm:block">
+                <p className="truncate text-[13px] font-semibold leading-tight tracking-tight text-brand-forest min-[1366px]:text-[14px]">
                   Validação de Orçamentos
                 </p>
-                <p className="whitespace-nowrap text-[11px] text-slate-600 min-[1366px]:text-xs">
+                <p className="truncate text-[11px] text-slate-600 min-[1366px]:text-xs">
                   Penha + Alfa Diagnóstico
                 </p>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <nav className="flex items-center rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+            <div className="order-3 flex w-full shrink-0 items-center gap-2 min-[1440px]:order-none min-[1440px]:w-auto">
+              <nav className="flex items-center overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
                 {navItems.map((item, index) => {
                   const active = pathname === item.href;
                   const edgeClass =
@@ -94,7 +94,7 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
 
             <div className="flex shrink-0 items-center justify-end gap-2">
               {realtimeState ? (
-                <span className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600">
+                <span className="hidden h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 sm:inline-flex">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   Online
                 </span>
@@ -105,7 +105,7 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
                   type="button"
                   onClick={() => setValidatorMenuOpen((open) => !open)}
                   title={`Validador: ${validatorName || "Usuário sem nome"}`}
-                  className="inline-flex h-9 max-w-[210px] items-center gap-2 rounded-xl border border-brand-emerald/15 bg-brand-mint/30 px-3 text-sm text-brand-forest shadow-sm shadow-slate-900/5 transition hover:bg-brand-mint/50"
+                  className="inline-flex h-9 max-w-[140px] items-center gap-2 rounded-xl border border-brand-emerald/15 bg-brand-mint/30 px-3 text-sm text-brand-forest shadow-sm shadow-slate-900/5 transition hover:bg-brand-mint/50 sm:max-w-[210px]"
                 >
                   <UserRound className="h-4 w-4 shrink-0 text-brand-forest/80" />
                   <span className="truncate whitespace-nowrap font-medium">
