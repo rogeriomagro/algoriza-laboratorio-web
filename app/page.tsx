@@ -7,18 +7,20 @@ import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { KanbanFilters } from "@/components/kanban/KanbanFilters";
 import { supabase } from "@/lib/supabase/client";
 import type { Atendimento } from "@/lib/supabase/types";
-import { normalizeSearch } from "@/lib/format";
+import { labFromUnidade, normalizeSearch } from "@/lib/format";
 import { STATUS_ORDER } from "@/lib/status";
 import { useRealtimeAtendimentos } from "@/hooks/useRealtimeAtendimentos";
 
 const KANBAN_COLUMNS =
-  "id,protocolo,telefone,responsavel_nome,paciente_nome,medico_solicitante,total_validado,total_bruto,status,termos_nao_encontrados,created_at,updated_at";
+  "id,protocolo,telefone,responsavel_nome,paciente_nome,medico_solicitante,total_validado,total_bruto,desconto_pct,status,termos_nao_encontrados,unidade_preferida,validado_por,created_at,updated_at";
 
 function KanbanPageContent() {
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [validador, setValidador] = useState("");
+  const [lab, setLab] = useState("");
 
   const loadAtendimentos = useCallback(async () => {
     setError(null);
@@ -43,27 +45,51 @@ function KanbanPageContent() {
     loadAtendimentos();
   }, [loadAtendimentos]);
 
+  const validadores = useMemo(() => {
+    const set = new Set<string>();
+    for (const atendimento of atendimentos) {
+      const nome = (atendimento.validado_por || "").trim();
+      if (nome) set.add(nome);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [atendimentos]);
+
   const filtered = useMemo(() => {
     const q = normalizeSearch(query);
-    if (!q) return atendimentos;
 
     return atendimentos.filter((atendimento) => {
-      const haystack = normalizeSearch(
-        [
-          atendimento.protocolo,
-          atendimento.paciente_nome,
-          atendimento.telefone,
-          atendimento.medico_solicitante,
-          atendimento.responsavel_nome
-        ].join(" ")
-      );
-      return haystack.includes(q);
+      if (q) {
+        const haystack = normalizeSearch(
+          [
+            atendimento.protocolo,
+            atendimento.paciente_nome,
+            atendimento.telefone,
+            atendimento.medico_solicitante,
+            atendimento.responsavel_nome
+          ].join(" ")
+        );
+        if (!haystack.includes(q)) return false;
+      }
+
+      if (validador && (atendimento.validado_por || "").trim() !== validador) return false;
+
+      if (lab && labFromUnidade(atendimento.unidade_preferida) !== lab) return false;
+
+      return true;
     });
-  }, [atendimentos, query]);
+  }, [atendimentos, query, validador, lab]);
 
   return (
     <AppShell onRefresh={loadAtendimentos} realtimeState={realtimeState}>
-      <KanbanFilters value={query} onChange={setQuery} />
+      <KanbanFilters
+        value={query}
+        onChange={setQuery}
+        validador={validador}
+        onValidadorChange={setValidador}
+        validadores={validadores}
+        lab={lab}
+        onLabChange={setLab}
+      />
 
       {loading ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">Carregando atendimentos...</div>

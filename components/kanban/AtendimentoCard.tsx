@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { AlertCircle, CalendarClock, MoreHorizontal, Phone, XCircle } from "lucide-react";
 import type { Atendimento } from "@/lib/supabase/types";
-import { formatCurrency, formatDate, formatPhone } from "@/lib/format";
+import { LAB_META, formatCurrency, formatDate, formatPhone, labFromUnidade, parseCurrency } from "@/lib/format";
 import { supabase } from "@/lib/supabase/client";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
@@ -18,7 +19,11 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const total = atendimento.total_validado ?? atendimento.total_bruto;
+  const grossTotal = atendimento.total_validado ?? atendimento.total_bruto;
+  const descontoPct = Number(atendimento.desconto_pct ?? 0) || 0;
+  const grossNum = parseCurrency(grossTotal);
+  const total = grossNum === null ? grossTotal : grossNum * (1 - descontoPct / 100);
+  const labMeta = labFromUnidade(atendimento.unidade_preferida);
   const missingCount = Array.isArray(atendimento.termos_nao_encontrados)
     ? atendimento.termos_nao_encontrados.length
     : 0;
@@ -66,6 +71,20 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
           <h3 className="mt-0.5 truncate text-sm font-semibold leading-tight text-slate-950">
             {atendimento.paciente_nome || "Paciente não informado"}
           </h3>
+          {labMeta ? (
+            <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5">
+              <Image
+                src={LAB_META[labMeta].logo}
+                alt={LAB_META[labMeta].nome}
+                width={14}
+                height={14}
+                className="h-3.5 w-3.5 object-contain"
+              />
+              <span className="text-[10px] font-medium text-slate-600">
+                {labMeta === "alfa" ? "Alfa Labs" : "N. S. da Penha"}
+              </span>
+            </span>
+          ) : null}
         </Link>
 
         <div className="flex shrink-0 items-start gap-1.5">

@@ -32,6 +32,7 @@ export interface Atendimento {
   observacoes_conversa: string | null;
   total_bruto: number | string | null;
   total_validado: number | string | null;
+  desconto_pct: number | string | null;
   status: AtendimentoStatus;
   termos_nao_encontrados: string[] | null;
   cotacao_original: JsonValue | null;
@@ -55,6 +56,7 @@ export interface AtendimentoExame {
   match_por: string | null;
   score: number | string | null;
   ambiguo: boolean | null;
+  cobertura: "sus" | "unimed" | null;
   incluido: boolean | null;
   editado_manual: boolean | null;
   ordem: number | null;

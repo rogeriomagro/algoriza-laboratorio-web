@@ -1,8 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import type { Atendimento } from "@/lib/supabase/types";
-import { asString, formatBirthDateInput, formatCpf, formatPhone, formatSchedulePreference } from "@/lib/format";
+import {
+  LAB_META,
+  UNIDADES,
+  asString,
+  formatBirthDateInput,
+  formatCpf,
+  formatPhone,
+  formatSchedulePreference,
+  labFromUnidade,
+} from "@/lib/format";
 
 const fields: Array<{ key: keyof Atendimento; label: string; placeholder?: string }> = [
   { key: "paciente_nome", label: "Nome do paciente" },
@@ -41,16 +51,40 @@ export function PatientForm({ atendimento, readOnly, saving, onSave }: PatientFo
     await onSave(form as Partial<Atendimento>);
   }
 
+  const lab = labFromUnidade(form.unidade_preferida);
+
   return (
     <section className="section">
+      <datalist id="unidades-datalist">
+        {UNIDADES.map((unidade) => (
+          <option key={unidade} value={unidade} />
+        ))}
+      </datalist>
+
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="section-title">Dados do paciente</h2>
           <p className="section-copy">Confira os dados principais antes de validar.</p>
         </div>
-        <button className="btn btn-secondary" onClick={save} disabled={readOnly || saving}>
-          {saving ? "Salvando..." : "Salvar dados"}
-        </button>
+        <div className="flex items-center gap-2">
+          {lab ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
+              <Image
+                src={LAB_META[lab].logo}
+                alt={LAB_META[lab].nome}
+                width={16}
+                height={16}
+                className="h-4 w-4 object-contain"
+              />
+              <span className="text-xs font-medium text-slate-700">
+                {lab === "alfa" ? "Alfa Labs" : "N. S. da Penha"}
+              </span>
+            </span>
+          ) : null}
+          <button className="btn btn-secondary" onClick={save} disabled={readOnly || saving}>
+            {saving ? "Salvando..." : "Salvar dados"}
+          </button>
+        </div>
       </div>
 
       <div className="mb-3 grid gap-2 lg:grid-cols-3">
@@ -73,11 +107,15 @@ export function PatientForm({ atendimento, readOnly, saving, onSave }: PatientFo
       <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         {fields.map((field) => (
           <label key={field.key} className={field.key === "paciente_nome" ? "block xl:col-span-2" : "block"}>
-            <span className="field-label">{field.label}</span>
+            <span className="field-label">
+              {field.label}
+              {field.key === "unidade_preferida" ? <span className="text-rose-500"> *</span> : null}
+            </span>
             <input
               className="field-input mt-1"
               value={form[field.key] || ""}
               placeholder={field.placeholder}
+              list={field.key === "unidade_preferida" ? "unidades-datalist" : undefined}
               onChange={(event) => {
                 const value = event.target.value;
                 setForm((current) => normalizePatientForm({ ...current, [field.key]: value }));

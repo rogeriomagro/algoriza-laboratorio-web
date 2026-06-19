@@ -139,6 +139,38 @@ export function describeMatch(match: string | null | undefined): string {
   }
 }
 
+// Unidades de atendimento (5). Iúna é atendida pelo Alfa Diagnóstico; as demais
+// pelo Laboratório Nossa Senhora da Penha.
+export const UNIDADES = [
+  "Matriz - Ibatiba",
+  "Centro - Ibatiba",
+  "Alfa Diagnóstico - Iúna",
+  "Brejetuba",
+  "Piaçu",
+] as const;
+
+export type LabTag = "alfa" | "penha";
+
+export interface LabMeta {
+  tag: LabTag;
+  nome: string;
+  logo: string;
+}
+
+export const LAB_META: Record<LabTag, LabMeta> = {
+  alfa: { tag: "alfa", nome: "Alfa Diagnóstico", logo: "/labs/alfa-logo.png" },
+  penha: { tag: "penha", nome: "Nossa Senhora da Penha", logo: "/labs/penha-logo.jpg" },
+};
+
+// Regra de tag: unidade de Iúna → Alfa Labs; todas as outras → Nossa Senhora da Penha.
+// Retorna null quando a unidade está vazia/indefinida (não rotular por engano).
+export function labFromUnidade(unidade: string | null | undefined): LabTag | null {
+  const u = normalizeSearch(unidade);
+  if (!u || u === "nao informado") return null;
+  if (u.includes("iuna") || u.includes("alfa")) return "alfa";
+  return "penha";
+}
+
 export function formatDays(value: number | string | null | undefined): string {
   const raw = String(value ?? "").trim();
   if (!raw) return "Prazo não informado";

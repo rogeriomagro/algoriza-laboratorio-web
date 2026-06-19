@@ -364,6 +364,14 @@ function AtendimentoPageContent() {
             <TermsNotFoundAlert
               terms={termsAsArray(atendimento.termos_nao_encontrados)}
               onPickTerm={setCatalogInitialSearch}
+              onResolve={
+                readOnly
+                  ? undefined
+                  : async (term) => {
+                      const next = termsAsArray(atendimento.termos_nao_encontrados).filter((item) => item !== term);
+                      await saveAtendimento({ termos_nao_encontrados: next });
+                    }
+              }
             />
             <CatalogAutocomplete
               atendimentoId={atendimento.id}
@@ -383,7 +391,7 @@ function AtendimentoPageContent() {
           </div>
 
           <div className="space-y-3">
-            <TotalSummary atendimento={atendimento} />
+            <TotalSummary atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
 
             <section className="section">
               <h2 className="section-title">Rastreio do atendimento</h2>

@@ -53,6 +53,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
   const [termoOriginal, setTermoOriginal] = useState("");
   const [matchPor, setMatchPor] = useState<string | null>(null);
   const [incluido, setIncluido] = useState(true);
+  const [cobertura, setCobertura] = useState<"sus" | "unimed" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -70,6 +71,7 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
     setTermoOriginal(asString(exame.termo_original));
     setMatchPor(exame.match_por);
     setIncluido(exame.incluido !== false);
+    setCobertura(exame.cobertura ?? null);
     setError(null);
     setIsEditing(false);
     setCatalogResults([]);
@@ -199,8 +201,19 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
     });
   }
 
+  async function toggleCobertura(value: "sus" | "unimed") {
+    const next = cobertura === value ? null : value;
+    setCobertura(next);
+    await onSave(exame.id, {
+      cobertura: next,
+      editado_manual: true,
+    });
+  }
+
   const precoNumber = toNumberOrNull(preco);
   const precoFmt = preco.trim() ? formatCurrency(precoNumber) : "Não informado";
+  const coberturaTexto =
+    cobertura === "sus" ? "Coberto pelo SUS" : cobertura === "unimed" ? "Coberto pela Unimed" : null;
   const metaParts = [
     sku.trim() ? `SKU ${sku.trim()}` : "Sem SKU",
     `Prazo ${prazoDias.trim() ? formatDays(toNumberOrNull(prazoDias)) : "—"}`,
@@ -292,9 +305,18 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
 
           <div className="flex shrink-0 flex-col items-end gap-1.5">
             {!isEditing ? (
-              <span className={`text-base font-semibold ${incluido ? "text-brand-forest" : "text-slate-400 line-through"}`}>
-                {precoFmt}
-              </span>
+              coberturaTexto ? (
+                <div className="text-right leading-tight">
+                  <span className="block text-base font-semibold text-brand-forest">{formatCurrency(0)}</span>
+                  {preco.trim() ? (
+                    <span className="block text-[11px] text-slate-400 line-through">{precoFmt}</span>
+                  ) : null}
+                </div>
+              ) : (
+                <span className={`text-base font-semibold ${incluido ? "text-brand-forest" : "text-slate-400 line-through"}`}>
+                  {precoFmt}
+                </span>
+              )
             ) : null}
             <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white/90 px-2.5 py-1 text-xs text-slate-700">
               <span>Incluído</span>
@@ -305,6 +327,43 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
                 onChange={(event) => toggleIncluded(event.target.checked)}
               />
             </label>
+
+            {!readOnly ? (
+              <div className="flex items-center gap-1" role="group" aria-label="Cobertura do exame">
+                <button
+                  type="button"
+                  onClick={() => toggleCobertura("sus")}
+                  disabled={saving}
+                  className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold transition disabled:opacity-60 ${
+                    cobertura === "sus"
+                      ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700"
+                  }`}
+                  title="Coberto pelo SUS (zera o valor deste exame)"
+                  aria-pressed={cobertura === "sus"}
+                >
+                  SUS
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleCobertura("unimed")}
+                  disabled={saving}
+                  className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold transition disabled:opacity-60 ${
+                    cobertura === "unimed"
+                      ? "border-teal-300 bg-teal-100 text-teal-800"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-teal-200 hover:text-teal-700"
+                  }`}
+                  title="Coberto pela Unimed (zera o valor deste exame)"
+                  aria-pressed={cobertura === "unimed"}
+                >
+                  Unimed
+                </button>
+              </div>
+            ) : null}
+
+            {coberturaTexto ? (
+              <span className="chip border-emerald-200 bg-emerald-50 text-emerald-800">{coberturaTexto}</span>
+            ) : null}
           </div>
         </div>
 

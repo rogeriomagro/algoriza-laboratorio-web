@@ -1,13 +1,15 @@
 "use client";
 
-import { AlertCircle, Search } from "lucide-react";
+import { AlertCircle, Check, Search } from "lucide-react";
 
 interface TermsNotFoundAlertProps {
   terms: string[] | null;
   onPickTerm: (term: string) => void;
+  /** Remove o termo da lista (resolvido). Quando ausente, o botão não aparece (modo leitura). */
+  onResolve?: (term: string) => void | Promise<void>;
 }
 
-export function TermsNotFoundAlert({ terms, onPickTerm }: TermsNotFoundAlertProps) {
+export function TermsNotFoundAlert({ terms, onPickTerm, onResolve }: TermsNotFoundAlertProps) {
   if (!terms || terms.length === 0) return null;
 
   return (
@@ -22,16 +24,39 @@ export function TermsNotFoundAlert({ terms, onPickTerm }: TermsNotFoundAlertProp
         </span>
       </div>
 
+      {onResolve ? (
+        <p className="mt-1.5 text-xs text-amber-800/90">
+          Clique no termo para buscar no catálogo. Depois de resolver, use o ✓ para tirar o aviso.
+        </p>
+      ) : null}
+
       <div className="mt-2 flex flex-wrap gap-1.5">
         {terms.map((term) => (
-          <button
+          <span
             key={term}
-            className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs font-medium text-amber-950 transition hover:border-amber-300 hover:bg-amber-100"
-            onClick={() => onPickTerm(term)}
+            className="inline-flex items-center overflow-hidden rounded-full border border-amber-200 bg-white text-xs font-medium text-amber-950"
           >
-            <Search className="h-3 w-3" />
-            {term}
-          </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 transition hover:bg-amber-100"
+              onClick={() => onPickTerm(term)}
+              title="Buscar este termo no catálogo"
+            >
+              <Search className="h-3 w-3" />
+              {term}
+            </button>
+            {onResolve ? (
+              <button
+                type="button"
+                className="flex items-center border-l border-amber-200 px-2 py-1 text-emerald-700 transition hover:bg-emerald-50"
+                onClick={() => onResolve(term)}
+                title="Marcar como resolvido (remove o aviso)"
+                aria-label={`Marcar "${term}" como resolvido`}
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+            ) : null}
+          </span>
         ))}
       </div>
     </section>
