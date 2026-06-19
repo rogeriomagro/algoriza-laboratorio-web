@@ -142,9 +142,9 @@ export function describeMatch(match: string | null | undefined): string {
 // Unidades de atendimento (5). Iúna é atendida pelo Alfa Diagnóstico; as demais
 // pelo Laboratório Nossa Senhora da Penha.
 export const UNIDADES = [
-  "Matriz - Ibatiba",
-  "Centro - Ibatiba",
-  "Alfa Diagnóstico - Iúna",
+  "Ibatiba - Matriz",
+  "Ibatiba - Centro",
+  "Iúna",
   "Brejetuba",
   "Piaçu",
 ] as const;
