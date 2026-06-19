@@ -303,15 +303,15 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
             </p>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <div className="flex shrink-0 items-center gap-3">
             {!isEditing ? (
               coberturaTexto ? (
-                <div className="text-right leading-tight">
-                  <span className="block text-base font-semibold text-brand-forest">{formatCurrency(0)}</span>
+                <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
                   {preco.trim() ? (
-                    <span className="block text-[11px] text-slate-400 line-through">{precoFmt}</span>
+                    <span className="text-[11px] text-slate-400 line-through">{precoFmt}</span>
                   ) : null}
-                </div>
+                  <span className="text-base font-semibold text-brand-forest">{formatCurrency(0)}</span>
+                </span>
               ) : (
                 <span className={`text-base font-semibold ${incluido ? "text-brand-forest" : "text-slate-400 line-through"}`}>
                   {precoFmt}
