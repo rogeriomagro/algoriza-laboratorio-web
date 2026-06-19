@@ -327,43 +327,6 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
                 onChange={(event) => toggleIncluded(event.target.checked)}
               />
             </label>
-
-            {!readOnly ? (
-              <div className="flex items-center gap-1" role="group" aria-label="Cobertura do exame">
-                <button
-                  type="button"
-                  onClick={() => toggleCobertura("sus")}
-                  disabled={saving}
-                  className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold transition disabled:opacity-60 ${
-                    cobertura === "sus"
-                      ? "border-emerald-300 bg-emerald-100 text-emerald-800"
-                      : "border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700"
-                  }`}
-                  title="Coberto pelo SUS (zera o valor deste exame)"
-                  aria-pressed={cobertura === "sus"}
-                >
-                  SUS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleCobertura("unimed")}
-                  disabled={saving}
-                  className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold transition disabled:opacity-60 ${
-                    cobertura === "unimed"
-                      ? "border-teal-300 bg-teal-100 text-teal-800"
-                      : "border-slate-200 bg-white text-slate-500 hover:border-teal-200 hover:text-teal-700"
-                  }`}
-                  title="Coberto pela Unimed (zera o valor deste exame)"
-                  aria-pressed={cobertura === "unimed"}
-                >
-                  Unimed
-                </button>
-              </div>
-            ) : null}
-
-            {coberturaTexto ? (
-              <span className="chip border-emerald-200 bg-emerald-50 text-emerald-800">{coberturaTexto}</span>
-            ) : null}
           </div>
         </div>
 
@@ -478,6 +441,42 @@ export function ExamRow({ exame, readOnly, saving, onSave }: ExamRowProps) {
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {expanded ? "Ocultar detalhes" : "Detalhes tecnicos"}
           </button>
+
+          {!readOnly ? (
+            <div className="ml-auto flex items-center gap-1.5" role="group" aria-label="Cobertura do exame">
+              <span className="text-xs text-slate-500">Coberto por:</span>
+              <button
+                type="button"
+                onClick={() => toggleCobertura("sus")}
+                disabled={saving}
+                className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold transition disabled:opacity-60 ${
+                  cobertura === "sus"
+                    ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                    : "border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700"
+                }`}
+                title="Coberto pelo SUS (zera o valor deste exame)"
+                aria-pressed={cobertura === "sus"}
+              >
+                SUS
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleCobertura("unimed")}
+                disabled={saving}
+                className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold transition disabled:opacity-60 ${
+                  cobertura === "unimed"
+                    ? "border-teal-300 bg-teal-100 text-teal-800"
+                    : "border-slate-200 bg-white text-slate-500 hover:border-teal-200 hover:text-teal-700"
+                }`}
+                title="Coberto pela Unimed (zera o valor deste exame)"
+                aria-pressed={cobertura === "unimed"}
+              >
+                Unimed
+              </button>
+            </div>
+          ) : coberturaTexto ? (
+            <span className="ml-auto chip border-emerald-200 bg-emerald-50 text-emerald-800">{coberturaTexto}</span>
+          ) : null}
         </div>
 
         {expanded ? (

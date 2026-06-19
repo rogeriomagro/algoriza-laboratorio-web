@@ -57,7 +57,7 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
             <input
               id="desconto-pct"
               inputMode="decimal"
-              className="field-input h-9 pr-7 text-right text-sm"
+              className="field-input h-9 !pr-8 text-right text-sm"
               value={desconto}
               disabled={readOnly || saving || bruto === null}
               onChange={(event) => setDesconto(event.target.value.replace(/[^0-9.,]/g, ""))}

@@ -21,6 +21,7 @@ function KanbanPageContent() {
   const [query, setQuery] = useState("");
   const [validador, setValidador] = useState("");
   const [lab, setLab] = useState("");
+  const [usuariosCadastrados, setUsuariosCadastrados] = useState<string[]>([]);
 
   const loadAtendimentos = useCallback(async () => {
     setError(null);
@@ -45,14 +46,30 @@ function KanbanPageContent() {
     loadAtendimentos();
   }, [loadAtendimentos]);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("kanban_usuarios")
+        .select("nome")
+        .eq("ativo", true)
+        .order("nome", { ascending: true });
+      if (data) {
+        setUsuariosCadastrados(
+          (data as { nome: string | null }[]).map((u) => (u.nome || "").trim()).filter(Boolean)
+        );
+      }
+    })();
+  }, []);
+
   const validadores = useMemo(() => {
     const set = new Set<string>();
+    for (const nome of usuariosCadastrados) if (nome) set.add(nome);
     for (const atendimento of atendimentos) {
       const nome = (atendimento.validado_por || "").trim();
       if (nome) set.add(nome);
     }
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [atendimentos]);
+  }, [usuariosCadastrados, atendimentos]);
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(query);
