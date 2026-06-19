@@ -52,7 +52,7 @@ export function AppShell({ children, onRefresh, realtimeState }: AppShellProps) 
               </div>
             </div>
 
-            <div className="order-3 flex w-full shrink-0 items-center gap-2 min-[1440px]:order-none min-[1440px]:w-auto">
+            <div className="order-3 flex w-full shrink-0 items-center gap-2 min-[1600px]:order-none min-[1600px]:w-auto">
               <nav className="flex items-center overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
                 {navItems.map((item, index) => {
                   const active = pathname === item.href;

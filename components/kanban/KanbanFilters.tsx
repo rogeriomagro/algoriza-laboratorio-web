@@ -39,7 +39,7 @@ export function KanbanFilters({
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="field-label">Validado por (comissão)</span>
+          <span className="field-label">Validado por</span>
           <select
             className="field-input mt-2"
             value={validador}
