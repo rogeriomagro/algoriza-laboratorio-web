@@ -26,23 +26,25 @@ Navegador
 
 ```text
 app/
-  page.tsx                     Kanban
+  page.tsx                     Kanban (com filtros de validador e laboratorio)
   login/page.tsx               autenticacao
   atendimentos/[id]/page.tsx   revisao do atendimento
+  calendario/page.tsx          calendario de coletas (somente front-end)
   usuarios/page.tsx            gestao de usuarios
   sugestoes-base/page.tsx      placeholder futuro
   api/users/route.ts            API administrativa
   api/resposta-validada/route.ts ponte para o n8n
 components/
-  atendimento/                 dados gerais e resumo
-  exames/                      busca, lista e edicao
-  kanban/                      quadro, colunas e cards
+  atendimento/                 dados, resumo/desconto (TotalSummary), termos (TermsNotFoundAlert)
+  exames/                      busca, lista e edicao (ExamRow com botoes SUS/Unimed)
+  kanban/                      quadro, colunas, cards (tag de laboratorio) e filtros
+  calendario/                  CalendarioView (estado local, sem banco)
   layout/                      header e marcas
   auth/                        protecao de rotas
 hooks/                         sessao e Realtime
 lib/
   status.ts                    estados e leitura
-  format.ts                    formatacao brasileira
+  format.ts                    formatacao BR + UNIDADES, LAB_META e labFromUnidade
   supabase/                    clientes, tipos e admin
 ```
 
@@ -81,11 +83,11 @@ Ao abrir um atendimento `aguardando_validacao`, a pagina executa um update condi
 
 ### `atendimentos`
 
-Guarda paciente, prescricao, totais, status, protocolo e rastreio (`validado_por`, `validado_em`, `enviado_em`).
+Guarda paciente, prescricao, totais, status, protocolo e rastreio (`validado_por`, `validado_em`, `enviado_em`). Inclui **`desconto_pct`** (NUMERIC 0–100) — o desconto manual concedido pela equipe naquele orcamento.
 
 ### `atendimento_exames`
 
-Guarda a copia operacional de cada exame daquele atendimento. E aqui que a equipe edita nome, SKU, preco, prazo, jejum, preparo e inclusao.
+Guarda a copia operacional de cada exame daquele atendimento. E aqui que a equipe edita nome, SKU, preco, prazo, jejum, preparo e inclusao. Inclui **`cobertura`** (`'sus' | 'unimed' | NULL`) — quando preenchido, o exame e coberto pelo plano e sai zerado do orcamento (nao entra no `total_validado`).
 
 ### `catalogo_exames`
 
@@ -108,11 +110,27 @@ Existem dois usos:
 
 Salvar uma edicao define `editado_manual = true`. Selecoes do catalogo usam `match_por = manual_catalogo`; cadastros totalmente livres usam `match_por = manual_livre`.
 
-## Total validado
+## Total validado, desconto e cobertura
 
-O frontend nao e a fonte de verdade do total. O banco executa `recalc_total_validado()` depois de mudancas em `atendimento_exames` e soma os precos das linhas com `incluido = true`.
+O frontend nao e a fonte de verdade do total. O banco executa `recalc_total_validado()` depois de mudancas em `atendimento_exames` e soma os precos das linhas com `incluido = true` **e `cobertura IS NULL`** (exames cobertos por SUS/Unimed nao entram).
 
-A interface recarrega o atendimento e mostra `atendimentos.total_validado`.
+O **desconto manual** (`atendimentos.desconto_pct`) **nao** e gravado em `total_validado` — e aplicado na exibicao: total final = `total_validado * (1 - desconto_pct/100)`. Assim, mudar a % nao depende do trigger (que so dispara em `atendimento_exames`).
+
+- **Desconto** (`components/atendimento/TotalSummary.tsx`): campo de % que salva `desconto_pct` e mostra o "Total com desconto".
+- **Cobertura** (`components/exames/ExamRow.tsx`): botoes **SUS/Unimed** por exame que salvam `cobertura` (e zeram o exame); o trigger recalcula o total ao mudar `cobertura`.
+
+A interface recarrega o atendimento e mostra `atendimentos.total_validado` (e o total com desconto quando houver).
+
+## Filtros, tags de laboratorio e termos resolvidos
+
+- **Filtros do Kanban** (`components/kanban/KanbanFilters.tsx`): texto + **Validado por** (lista nomes de `kanban_usuarios` ativos via SELECT autenticado, somados aos `validado_por` ja presentes) + **Laboratorio** (`alfa`/`penha`). A derivacao usa `labFromUnidade()` em `lib/format.ts` (unidade com "iuna"/"alfa" => Alfa; demais => N. S. da Penha).
+- **Tag/logo** do laboratorio aparece no card (`AtendimentoCard`) e na ficha (`PatientForm`), usando `LAB_META` e as imagens em `public/labs/`.
+- **Termo resolvido** (`components/atendimento/TermsNotFoundAlert.tsx`): cada termo tem um botao ✓ que o remove de `atendimentos.termos_nao_encontrados` (a contagem do card some junto).
+- **Unidade** no `PatientForm` sugere as 5 cidades (datalist) e e marcada como obrigatoria.
+
+## Calendario (somente front-end)
+
+`/calendario` (`components/calendario/CalendarioView.tsx`) e uma prova visual: abre/fecha dias (incl. fins de semana), abre/fecha horarios, capacidade e feriados, tudo em **estado local React**. Nao ha banco, agente nem persistencia ainda — o desenho tecnico da agenda real esta em `../documentacao/agenda-plano.md`.
 
 ## Validacao e n8n
 
@@ -154,7 +172,10 @@ O Kanban escuta mudancas em `atendimentos`. A tela de detalhe escuta `atendiment
 ## Limitacoes atuais
 
 - A aba **Base de exames** esta desabilitada e a rota e apenas placeholder.
+- A aba **Calendario** e somente visual (estado local) — sem banco, agente nem agendamento real.
+- Nao ha status **`convertido`** nem relatorio de comissao ainda (so o filtro por validador).
+- Nao ha botao de **reabrir/editar atendimento ja enviado** com login restrito.
 - Inativar um perfil nao revoga automaticamente o Supabase Auth.
-- Nao ha papel `admin` persistido; a administracao usa allowlist por e-mail.
+- Nao ha papel `admin`/perfis por tipo de usuario persistido; a administracao usa allowlist por e-mail.
 - O chip Realtime nao mede latencia nem confirma recuperacao apos falhas de rede.
 - O frontend confia no trigger para o total; sem o trigger, o total exibido fica desatualizado.

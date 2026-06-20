@@ -2,7 +2,7 @@
 
 Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Penha e Alfa Diagnostico revisar, corrigir e validar os atendimentos preparados pelo chatbot.
 
-> Estado documentado: 18/06/2026. Este README descreve o codigo atual da pasta `Ferramenta Web`.
+> Estado documentado: 19/06/2026. Este README descreve o codigo atual da pasta `Ferramenta Web`.
 
 ## O que a aplicacao faz
 
@@ -12,10 +12,16 @@ Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Pen
 - permite editar os dados do paciente e da prescricao;
 - permite incluir, excluir do total e corrigir exames individualmente;
 - pesquisa exames por nome, SKU e sinonimos no `catalogo_exames`;
-- recalcula o total validado no banco;
+- aplica **desconto manual (%)** por atendimento e recalcula o total exibido;
+- marca exames como cobertos por **SUS/Unimed** (zera o exame no orcamento);
+- recalcula o total validado no banco (excluindo exames cobertos);
+- filtra o quadro por texto, por **validador** e por **laboratorio**;
+- exibe a **tag/logo do laboratorio** no card (Iuna = Alfa; demais = N. S. da Penha);
+- permite marcar um **termo nao encontrado como resolvido** (some o aviso);
 - registra o nome do usuario autenticado como validador;
 - chama o webhook do n8n quando o atendimento e validado;
-- mantem atendimentos cancelados no banco, mas fora do quadro ativo.
+- mantem atendimentos cancelados no banco, mas fora do quadro ativo;
+- tem uma aba **Calendario** (`/calendario`) ainda **somente visual** (estado local, sem banco/agente).
 
 ## Stack
 
@@ -31,8 +37,9 @@ Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Pen
 | Rota | Uso |
 |---|---|
 | `/login` | Login da equipe pelo Supabase Auth |
-| `/` | Kanban de atendimentos |
+| `/` | Kanban de atendimentos (com filtros de validador e laboratorio) |
 | `/atendimentos/[id]` | Revisao e validacao de um atendimento |
+| `/calendario` | Calendario de coletas — **somente front-end** (estado local, sem persistencia) |
 | `/usuarios` | Criacao, listagem e ativacao operacional de usuarios |
 | `/sugestoes-base` | Placeholder da futura curadoria do catalogo; acesso desabilitado no menu |
 | `/api/users` | API server-side de gestao de usuarios |
@@ -63,7 +70,9 @@ n8n salva atendimento
 - A coluna `Aguardando` e ordenada do atendimento mais antigo para o mais novo.
 - O total oficial vem de `atendimentos.total_validado`.
 - Alteracoes nos exames sao gravadas em `atendimento_exames`, nunca no catalogo mestre.
-- O trigger `recalc_total_validado()` recalcula o total usando apenas exames com `incluido = true`.
+- O trigger `recalc_total_validado()` recalcula o total usando exames com `incluido = true` **e `cobertura IS NULL`** (exames cobertos por SUS/Unimed saem zerados).
+- O **desconto manual** (`atendimentos.desconto_pct`) NAO entra em `total_validado`; o total final exibido/PDF = `total_validado * (1 - desconto_pct/100)`.
+- No PDF, quando ha desconto especial ele **substitui** os 20% a vista (nao soma); sem desconto, segue os 20% normais.
 - Validar exige telefone e pelo menos um exame incluido.
 
 ## Edicao de exames
@@ -121,6 +130,9 @@ SQLs principais:
 - `../documentacao/build/atendimentos_schema.sql`
 - `../documentacao/build/salvar_atendimento.sql`
 - `../documentacao/build/kanban_usuarios_schema.sql`
+- `../documentacao/build/add_desconto_cobertura.sql` (colunas `atendimentos.desconto_pct` e `atendimento_exames.cobertura` + trigger que exclui cobertos)
+
+> A web le `kanban_usuarios` (SELECT autenticado) para listar os usuarios no filtro **Validado por**.
 
 ## Rodar localmente
 

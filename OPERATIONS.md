@@ -15,8 +15,11 @@
 3. Revise paciente, prescricao, termos nao encontrados e exames.
 4. Corrija exames pelo botao **Editar**, adicione pelo catalogo ou use **Adicionar novo exame** para um lancamento totalmente manual.
 5. Desmarque **Incluido** para manter um exame registrado, mas fora do total.
-6. Confirme o total validado.
-7. Valide ou rejeite.
+6. Se um exame for coberto, use **Coberto por: SUS / Unimed** (ele zera e sai do total).
+7. Se for dar desconto, digite a **%** no campo **Desconto manual** do "Resumo do orcamento".
+8. Resolva os **termos pendentes** (busque no catalogo e clique no ✓ para tirar o aviso).
+9. Confirme o total (e o "Total com desconto", se houver).
+10. Valide ou rejeite. No dialogo de validar aparece o **Total com desconto** quando aplicado.
 
 Depois de validar, acompanhe a mudanca para `enviado`. Se permanecer em `validado`, verifique o workflow `Resposta Validada` no n8n.
 
@@ -84,8 +87,9 @@ npm run build
 ### Total nao muda
 
 - confirme que o exame foi salvo;
-- confirme `incluido = true`;
-- verifique o trigger `recalc_total_validado()`;
+- confirme `incluido = true` e `cobertura` vazio (exame coberto sai zerado);
+- lembre que o **desconto manual** so altera o total exibido (`total_validado` segue cheio);
+- verifique o trigger `recalc_total_validado()` (deve excluir `cobertura IS NOT NULL`) e se `add_desconto_cobertura.sql` foi aplicado;
 - recarregue o atendimento.
 
 ### Validou, mas nao enviou
@@ -115,6 +119,9 @@ Depois de alterar envs, gere um novo deploy.
 | Adicionar exame pelo catalogo | `atendimento_exames` |
 | Adicionar novo exame manual | `atendimento_exames` (`match_por = manual_livre`) |
 | Desmarcar incluido | `atendimento_exames.incluido` |
+| Marcar SUS/Unimed | `atendimento_exames.cobertura` (zera o exame no total) |
+| Definir desconto manual | `atendimentos.desconto_pct` |
+| Resolver termo pendente | `atendimentos.termos_nao_encontrados` (remove o termo) |
 | Cancelar card | `atendimentos.status = cancelado` |
 | Validar | `atendimentos.status`, `validado_por`, `validado_em` |
 | Criar usuario | Supabase Auth + `kanban_usuarios` |
