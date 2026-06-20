@@ -50,6 +50,9 @@ function AtendimentoPageContent() {
   const [validateOpen, setValidateOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [convertPassword, setConvertPassword] = useState("");
+  const [convertError, setConvertError] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     setError(null);
@@ -285,6 +288,51 @@ function AtendimentoPageContent() {
     setActionLoading(false);
   }
 
+  async function convert() {
+    if (!atendimento) return;
+    setActionLoading(true);
+    setConvertError(null);
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const email = sessionData.session?.user?.email;
+    if (!email) {
+      setConvertError("Sessão não encontrada. Faça login novamente.");
+      setActionLoading(false);
+      return;
+    }
+
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password: convertPassword });
+    if (authError) {
+      setConvertError("Senha incorreta. Tente novamente.");
+      setActionLoading(false);
+      return;
+    }
+
+    const { data, error: updateError } = await supabase
+      .from("atendimentos")
+      .update({
+        status: "convertido",
+        convertido_por: validatorName || email,
+        convertido_em: new Date().toISOString()
+      })
+      .eq("id", atendimento.id)
+      .eq("status", "enviado")
+      .select("id")
+      .maybeSingle();
+
+    if (updateError) {
+      setConvertError(updateError.message);
+    } else if (!data) {
+      setConvertError("Não foi possível converter. O status pode ter mudado — recarregue a página.");
+    } else {
+      setConvertOpen(false);
+      setConvertPassword("");
+    }
+
+    await loadAll();
+    setActionLoading(false);
+  }
+
   if (loading) {
     return (
       <AppShell realtimeState={realtime.state}>
@@ -349,6 +397,12 @@ function AtendimentoPageContent() {
           onValidate={() => setValidateOpen(true)}
           onReject={() => setRejectOpen(true)}
           onReturnToWaiting={() => setReturnOpen(true)}
+          canConvert={atendimento.status === "enviado"}
+          onConvert={() => {
+            setConvertError(null);
+            setConvertPassword("");
+            setConvertOpen(true);
+          }}
         />
 
         {!readOnly && validateDisabledReason ? (
@@ -416,6 +470,16 @@ function AtendimentoPageContent() {
                     {atendimento.enviado_em ? formatDate(atendimento.enviado_em) : "Envio ainda não registrado"}
                   </dd>
                 </div>
+                <div className="soft-card">
+                  <dt className="field-label">Convertido por</dt>
+                  <dd className="mt-1 text-slate-900">{atendimento.convertido_por || "Ainda não convertido"}</dd>
+                </div>
+                <div className="soft-card">
+                  <dt className="field-label">Convertido em</dt>
+                  <dd className="mt-1 text-slate-900">
+                    {atendimento.convertido_em ? formatDate(atendimento.convertido_em) : "Conversão ainda não registrada"}
+                  </dd>
+                </div>
               </dl>
             </section>
           </div>
@@ -476,6 +540,44 @@ function AtendimentoPageContent() {
         onCancel={() => setReturnOpen(false)}
         onConfirm={returnToWaiting}
       />
+
+      {convertOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <h3 className="text-base font-semibold text-slate-900">Marcar como convertido</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Confirme com a sua senha para registrar que este orçamento virou coleta/venda. A ação fica no seu nome.
+            </p>
+            <label className="mt-4 block">
+              <span className="field-label">Sua senha</span>
+              <input
+                type="password"
+                className="field-input mt-1"
+                value={convertPassword}
+                autoFocus
+                disabled={actionLoading}
+                onChange={(event) => setConvertPassword(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && convertPassword) convert();
+                }}
+              />
+            </label>
+            {convertError ? <p className="mt-2 text-sm text-rose-700">{convertError}</p> : null}
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="btn btn-secondary" onClick={() => setConvertOpen(false)} disabled={actionLoading}>
+                Cancelar
+              </button>
+              <button
+                className="btn inline-flex items-center gap-2 rounded-lg border border-violet-300 bg-violet-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+                onClick={convert}
+                disabled={actionLoading || !convertPassword}
+              >
+                {actionLoading ? "Confirmando..." : "Confirmar conversão"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppShell>
   );
 }

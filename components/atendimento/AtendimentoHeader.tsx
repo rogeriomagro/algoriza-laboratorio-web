@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Clock3, Phone, ReceiptText, RotateCcw, UserRound, XCircle } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CheckCircle2, Clock3, Phone, ReceiptText, RotateCcw, UserRound, XCircle } from "lucide-react";
 import type { Atendimento } from "@/lib/supabase/types";
 import { formatCurrency, formatDate, formatPhone } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -13,6 +13,8 @@ interface AtendimentoHeaderProps {
   onValidate: () => void;
   onReject: () => void;
   onReturnToWaiting: () => void;
+  canConvert: boolean;
+  onConvert: () => void;
 }
 
 export function AtendimentoHeader({
@@ -21,7 +23,9 @@ export function AtendimentoHeader({
   validateDisabledReason,
   onValidate,
   onReject,
-  onReturnToWaiting
+  onReturnToWaiting,
+  canConvert,
+  onConvert
 }: AtendimentoHeaderProps) {
   const canValidate = canEdit && !validateDisabledReason;
 
@@ -63,6 +67,16 @@ export function AtendimentoHeader({
             <CheckCircle2 className="h-4 w-4" />
             Validar
           </button>
+          {canConvert ? (
+            <button
+              className="btn inline-flex items-center gap-2 rounded-lg border border-violet-300 bg-violet-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+              onClick={onConvert}
+              title="Marcar este orçamento como convertido (exige sua senha)"
+            >
+              <BadgeCheck className="h-4 w-4" />
+              Marcar como convertido
+            </button>
+          ) : null}
         </div>
       </div>
 

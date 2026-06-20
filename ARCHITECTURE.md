@@ -70,10 +70,13 @@ A rota `/api/users` recebe o access token do usuario no header `Authorization`. 
 | `em_validacao` | Em revisao humana | Sim |
 | `validado` | Aprovado pela equipe | Nao |
 | `enviado` | Resposta encaminhada | Nao |
+| `convertido` | Virou coleta/venda (paciente compareceu e pagou) | Nao |
 | `rejeitado` | Rejeitado pela equipe | Nao |
 | `cancelado` | Removido do quadro ativo | Nao |
 
-O Kanban combina `validado` e `enviado` em uma unica coluna visual. `cancelado` fica fora da consulta do quadro.
+O Kanban combina `validado` e `enviado` em uma coluna visual e mostra `convertido` em coluna propria. `cancelado` fica fora da consulta do quadro.
+
+**Conversao:** a partir de `enviado`, o card mostra o botao **Marcar como convertido**. A acao exige a **senha do operador** — a tela re-autentica com `supabase.auth.signInWithPassword` (mesmo usuario) e, se ok, grava `status='convertido'`, `convertido_por` e `convertido_em`. Aparece no **Rastreio do atendimento**.
 
 ## Reserva do card
 
@@ -173,7 +176,7 @@ O Kanban escuta mudancas em `atendimentos`. A tela de detalhe escuta `atendiment
 
 - A aba **Base de exames** esta desabilitada e a rota e apenas placeholder.
 - A aba **Calendario** e somente visual (estado local) — sem banco, agente nem agendamento real.
-- Nao ha status **`convertido`** nem relatorio de comissao ainda (so o filtro por validador).
+- O status **`convertido`** existe (coluna + botao com senha); falta o **relatorio de comissao** (somar convertidos por usuario).
 - Nao ha botao de **reabrir/editar atendimento ja enviado** com login restrito.
 - Inativar um perfil nao revoga automaticamente o Supabase Auth.
 - Nao ha papel `admin`/perfis por tipo de usuario persistido; a administracao usa allowlist por e-mail.

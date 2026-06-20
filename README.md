@@ -19,6 +19,7 @@ Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Pen
 - filtra o quadro por texto, por **validador** e por **laboratorio**;
 - exibe a **tag/logo do laboratorio** no card (Iuna = Alfa; demais = N. S. da Penha);
 - permite marcar um **termo nao encontrado como resolvido** (some o aviso);
+- permite marcar um orcamento ja enviado como **Convertido** (coluna propria), exigindo a **senha do operador**;
 - registra o nome do usuario autenticado como validador;
 - chama o webhook do n8n quando o atendimento e validado;
 - mantem atendimentos cancelados no banco, mas fora do quadro ativo;

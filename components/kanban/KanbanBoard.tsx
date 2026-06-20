@@ -34,6 +34,12 @@ const KANBAN_GROUPS: Array<{
     statuses: ["validado", "enviado"]
   },
   {
+    key: "convertido",
+    title: "Convertido",
+    description: "Orçamentos que viraram coleta/venda",
+    statuses: ["convertido"]
+  },
+  {
     key: "rejeitado",
     title: "Rejeitado",
     description: "Atendimentos rejeitados",
@@ -47,7 +53,7 @@ function getTime(atendimento: Atendimento) {
 
 export function KanbanBoard({ atendimentos, onChanged }: KanbanBoardProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
       {KANBAN_GROUPS.map((group) => {
         const items = atendimentos
           .filter((atendimento) => group.statuses.includes(atendimento.status))

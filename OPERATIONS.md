@@ -23,6 +23,10 @@
 
 Depois de validar, acompanhe a mudanca para `enviado`. Se permanecer em `validado`, verifique o workflow `Resposta Validada` no n8n.
 
+## Marcar como convertido
+
+Quando o paciente comparece, coleta e paga, abra o card (que estara em **Validados / enviados**) e clique em **Marcar como convertido**. O botao so aparece depois que o orcamento foi **enviado**. A acao pede a **sua senha** (confirmacao). Confirmada, o card vai para a coluna **Convertido** e o **Rastreio** registra quem converteu e quando. Esses dados alimentam o futuro relatorio de comissao.
+
 ## Criacao de usuarios
 
 Pre-requisitos:
@@ -124,6 +128,7 @@ Depois de alterar envs, gere um novo deploy.
 | Resolver termo pendente | `atendimentos.termos_nao_encontrados` (remove o termo) |
 | Cancelar card | `atendimentos.status = cancelado` |
 | Validar | `atendimentos.status`, `validado_por`, `validado_em` |
+| Marcar convertido (com senha) | `atendimentos.status='convertido'`, `convertido_por`, `convertido_em` |
 | Criar usuario | Supabase Auth + `kanban_usuarios` |
 
 Nenhuma edicao comum do card altera `catalogo_exames`.

@@ -4,7 +4,8 @@ export type AtendimentoStatus =
   | "validado"
   | "rejeitado"
   | "enviado"
-  | "cancelado";
+  | "cancelado"
+  | "convertido";
 
 export type JsonValue =
   | string
@@ -40,6 +41,8 @@ export interface Atendimento {
   validado_por: string | null;
   validado_em: string | null;
   enviado_em: string | null;
+  convertido_por: string | null;
+  convertido_em: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
