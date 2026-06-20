@@ -74,6 +74,7 @@ n8n salva atendimento
 - Alteracoes nos exames sao gravadas em `atendimento_exames`, nunca no catalogo mestre.
 - O trigger `recalc_total_validado()` recalcula o total usando exames com `incluido = true` **e `cobertura IS NULL`** (exames cobertos por SUS/Unimed saem zerados).
 - O **desconto manual** (`atendimentos.desconto_pct`) NAO entra em `total_validado`; o total final exibido/PDF = `total_validado * (1 - desconto_pct/100)`.
+- O desconto vem com **20% por padrao**: quando o valor salvo e 0, a tela (card, dialogo de validar e total do quadro) **exibe/aplica 20%** — sem precisar de SQL e coerente com o PDF, que ja aplicava 20% a vista. O operador pode trocar por outro valor.
 - No PDF, quando ha desconto especial ele **substitui** os 20% a vista (nao soma); sem desconto, segue os 20% normais.
 - Validar exige telefone e pelo menos um exame incluido.
 
