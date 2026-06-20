@@ -13,6 +13,7 @@ Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Pen
 - permite incluir, excluir do total e corrigir exames individualmente;
 - pesquisa exames por nome, SKU e sinonimos no `catalogo_exames`;
 - aplica **desconto manual (%)** por atendimento e recalcula o total exibido;
+- define a **validade do orcamento** (dias, padrao 30, editavel) usada no PDF;
 - marca exames como cobertos por **SUS/Unimed** (zera o exame no orcamento);
 - recalcula o total validado no banco (excluindo exames cobertos);
 - filtra o quadro por texto, por **validador** e por **laboratorio**;

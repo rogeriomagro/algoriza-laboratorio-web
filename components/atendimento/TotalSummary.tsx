@@ -16,14 +16,25 @@ function clampPct(value: number): number {
   return Math.min(100, Math.max(0, value));
 }
 
+function clampDays(value: number): number {
+  if (!Number.isFinite(value)) return 30;
+  return Math.min(365, Math.max(1, Math.round(value)));
+}
+
 export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSummaryProps) {
   const bruto = parseCurrency(atendimento.total_validado);
   const descontoSalvo = clampPct(Number(atendimento.desconto_pct ?? 0) || 0);
   const [desconto, setDesconto] = useState(String(descontoSalvo));
+  const validadeSalva = clampDays(Number(atendimento.validade_dias ?? 30) || 30);
+  const [validade, setValidade] = useState(String(validadeSalva));
 
   useEffect(() => {
     setDesconto(String(clampPct(Number(atendimento.desconto_pct ?? 0) || 0)));
   }, [atendimento.desconto_pct]);
+
+  useEffect(() => {
+    setValidade(String(clampDays(Number(atendimento.validade_dias ?? 30) || 30)));
+  }, [atendimento.validade_dias]);
 
   const descontoNum = clampPct(Number(desconto.replace(",", ".")) || 0);
   const final = bruto === null ? null : Number((bruto * (1 - descontoNum / 100)).toFixed(2));
@@ -35,6 +46,13 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
     setDesconto(String(novo));
     if (novo === descontoSalvo) return;
     await onSave({ desconto_pct: novo });
+  }
+
+  async function commitValidade() {
+    const novo = clampDays(Number(validade) || 30);
+    setValidade(String(novo));
+    if (novo === validadeSalva) return;
+    await onSave({ validade_dias: novo });
   }
 
   return (
@@ -75,6 +93,26 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
             Economia de {formatCurrency(economia)}
           </p>
         ) : null}
+
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <label className="field-label text-brand-forest/70" htmlFor="validade-dias">
+            Validade (dias)
+          </label>
+          <div className="w-24">
+            <input
+              id="validade-dias"
+              inputMode="numeric"
+              className="field-input h-9 text-right text-sm"
+              value={validade}
+              disabled={readOnly || saving}
+              onChange={(event) => setValidade(event.target.value.replace(/[^0-9]/g, ""))}
+              onBlur={commitValidade}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") (event.target as HTMLInputElement).blur();
+              }}
+            />
+          </div>
+        </div>
 
         <div className="mt-3 border-t border-brand-emerald/15 pt-3">
           <p className="field-label text-brand-forest/70">{temDesconto ? "Total com desconto" : "Total aprovado"}</p>

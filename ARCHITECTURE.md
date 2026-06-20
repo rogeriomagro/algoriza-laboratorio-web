@@ -116,7 +116,7 @@ O frontend nao e a fonte de verdade do total. O banco executa `recalc_total_vali
 
 O **desconto manual** (`atendimentos.desconto_pct`) **nao** e gravado em `total_validado` — e aplicado na exibicao: total final = `total_validado * (1 - desconto_pct/100)`. Assim, mudar a % nao depende do trigger (que so dispara em `atendimento_exames`).
 
-- **Desconto** (`components/atendimento/TotalSummary.tsx`): campo de % que salva `desconto_pct` e mostra o "Total com desconto".
+- **Desconto e validade** (`components/atendimento/TotalSummary.tsx`): campo de % que salva `desconto_pct` (mostra o "Total com desconto") e campo de **validade (dias)** que salva `atendimentos.validade_dias` (padrao 30) — usada pelo PDF.
 - **Cobertura** (`components/exames/ExamRow.tsx`): botoes **SUS/Unimed** por exame que salvam `cobertura` (e zeram o exame); o trigger recalcula o total ao mudar `cobertura`.
 
 A interface recarrega o atendimento e mostra `atendimentos.total_validado` (e o total com desconto quando houver).
