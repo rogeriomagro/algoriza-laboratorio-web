@@ -499,7 +499,8 @@ function AtendimentoPageContent() {
             <p>Telefone: {atendimento.telefone || "-"}</p>
             <p>Total validado: {formatCurrency(atendimento.total_validado)}</p>
             {(() => {
-              const desc = Number(atendimento.desconto_pct ?? 0) || 0;
+              const descStored = Number(atendimento.desconto_pct ?? 0) || 0;
+              const desc = descStored > 0 ? descStored : 20; // padrão 20%
               const bruto = parseCurrency(atendimento.total_validado);
               if (desc <= 0 || bruto === null) return null;
               return (

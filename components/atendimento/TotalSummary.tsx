@@ -23,13 +23,16 @@ function clampDays(value: number): number {
 
 export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSummaryProps) {
   const bruto = parseCurrency(atendimento.total_validado);
+  // Padrão de desconto = 20%: quando o valor salvo for 0 (ou vazio), exibe/aplica 20.
   const descontoSalvo = clampPct(Number(atendimento.desconto_pct ?? 0) || 0);
-  const [desconto, setDesconto] = useState(String(descontoSalvo));
+  const descontoInicial = descontoSalvo > 0 ? descontoSalvo : 20;
+  const [desconto, setDesconto] = useState(String(descontoInicial));
   const validadeSalva = clampDays(Number(atendimento.validade_dias ?? 30) || 30);
   const [validade, setValidade] = useState(String(validadeSalva));
 
   useEffect(() => {
-    setDesconto(String(clampPct(Number(atendimento.desconto_pct ?? 0) || 0)));
+    const s = clampPct(Number(atendimento.desconto_pct ?? 0) || 0);
+    setDesconto(String(s > 0 ? s : 20));
   }, [atendimento.desconto_pct]);
 
   useEffect(() => {

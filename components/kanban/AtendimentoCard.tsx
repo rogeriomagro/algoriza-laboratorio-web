@@ -20,7 +20,8 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const grossTotal = atendimento.total_validado ?? atendimento.total_bruto;
-  const descontoPct = Number(atendimento.desconto_pct ?? 0) || 0;
+  const descStored = Number(atendimento.desconto_pct ?? 0) || 0;
+  const descontoPct = descStored > 0 ? descStored : 20; // padrão 20%
   const grossNum = parseCurrency(grossTotal);
   const total = grossNum === null ? grossTotal : grossNum * (1 - descontoPct / 100);
   const labMeta = labFromUnidade(atendimento.unidade_preferida);
