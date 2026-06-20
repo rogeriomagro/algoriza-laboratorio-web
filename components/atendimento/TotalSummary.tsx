@@ -56,6 +56,7 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
   }
 
   return (
+    <>
     <section className="section">
       <h2 className="section-title">Resumo do orçamento</h2>
 
@@ -94,26 +95,6 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
           </p>
         ) : null}
 
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <label className="field-label text-brand-forest/70" htmlFor="validade-dias">
-            Validade (dias)
-          </label>
-          <div className="w-24">
-            <input
-              id="validade-dias"
-              inputMode="numeric"
-              className="field-input h-9 text-right text-sm"
-              value={validade}
-              disabled={readOnly || saving}
-              onChange={(event) => setValidade(event.target.value.replace(/[^0-9]/g, ""))}
-              onBlur={commitValidade}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") (event.target as HTMLInputElement).blur();
-              }}
-            />
-          </div>
-        </div>
-
         <div className="mt-3 border-t border-brand-emerald/15 pt-3">
           <p className="field-label text-brand-forest/70">{temDesconto ? "Total com desconto" : "Total aprovado"}</p>
           <p className="mt-1 text-3xl font-semibold tracking-tight text-brand-forest">
@@ -134,5 +115,34 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
         )}
       </div>
     </section>
+
+    <section className="section">
+      <h2 className="section-title">Validade do orçamento</h2>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <label className="field-label text-brand-forest/70" htmlFor="validade-dias">
+            Dias de validade
+          </label>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Quanto tempo o orçamento fica válido após a validação (vai no PDF).
+          </p>
+        </div>
+        <div className="w-24 shrink-0">
+          <input
+            id="validade-dias"
+            inputMode="numeric"
+            className="field-input h-9 text-right text-sm"
+            value={validade}
+            disabled={readOnly || saving}
+            onChange={(event) => setValidade(event.target.value.replace(/[^0-9]/g, ""))}
+            onBlur={commitValidade}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") (event.target as HTMLInputElement).blur();
+            }}
+          />
+        </div>
+      </div>
+    </section>
+    </>
   );
 }
