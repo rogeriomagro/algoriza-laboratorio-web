@@ -43,7 +43,7 @@ export const STATUS_BADGE_CLASS: Record<AtendimentoStatus, string> = {
   em_validacao: "border-teal-200 bg-teal-50 text-teal-800",
   validado: "border-emerald-200 bg-emerald-50 text-emerald-800",
   enviado: "border-brand-forest/15 bg-brand-forest/5 text-brand-forest",
-  convertido: "border-violet-200 bg-violet-50 text-violet-700",
+  convertido: "border-brand-forest bg-brand-forest text-white",
   rejeitado: "border-rose-200 bg-rose-50 text-rose-700",
   cancelado: "border-slate-200 bg-slate-100 text-slate-600"
 };

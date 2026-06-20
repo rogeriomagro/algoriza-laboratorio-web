@@ -69,12 +69,12 @@ export function AtendimentoHeader({
           </button>
           {canConvert ? (
             <button
-              className="btn inline-flex items-center gap-2 rounded-lg border border-violet-300 bg-violet-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700"
+              className="btn inline-flex items-center gap-2 rounded-lg border border-brand-forest bg-brand-forest px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-forest/90"
               onClick={onConvert}
               title="Marcar este orçamento como convertido (exige sua senha)"
             >
               <BadgeCheck className="h-4 w-4" />
-              Marcar como convertido
+              Convertido
             </button>
           ) : null}
         </div>

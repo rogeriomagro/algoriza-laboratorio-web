@@ -568,7 +568,7 @@ function AtendimentoPageContent() {
                 Cancelar
               </button>
               <button
-                className="btn inline-flex items-center gap-2 rounded-lg border border-violet-300 bg-violet-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+                className="btn inline-flex items-center gap-2 rounded-lg border border-brand-forest bg-brand-forest px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-forest/90 disabled:opacity-60"
                 onClick={convert}
                 disabled={actionLoading || !convertPassword}
               >
