@@ -434,6 +434,16 @@ function AtendimentoPageContent() {
           <div className="space-y-2">
             <p>Telefone: {atendimento.telefone || "-"}</p>
             <p>Total validado: {formatCurrency(atendimento.total_validado)}</p>
+            {(() => {
+              const desc = Number(atendimento.desconto_pct ?? 0) || 0;
+              const bruto = parseCurrency(atendimento.total_validado);
+              if (desc <= 0 || bruto === null) return null;
+              return (
+                <p className="font-medium text-brand-forest">
+                  Total com desconto ({desc}%): {formatCurrency(bruto * (1 - desc / 100))}
+                </p>
+              );
+            })()}
             <p>Validador atual: {validatorName || "Usuário sem nome configurado"}</p>
             {validationWarnings.length > 0 ? (
               <ul className="list-disc space-y-1 pl-5 text-amber-800">
