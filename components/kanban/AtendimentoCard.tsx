@@ -64,14 +64,11 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
 
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm shadow-slate-900/5 transition hover:border-brand-emerald/30 hover:shadow-md hover:shadow-brand-forest/10">
-      <div className="mb-2 flex items-start justify-between gap-2">
+      <div className="mb-1 flex items-start justify-between gap-2">
         <Link href={`/atendimentos/${atendimento.id}`} className="min-w-0 flex-1">
           <p className="truncate text-xs font-medium tracking-[0.03em] text-slate-500">
             {atendimento.protocolo || "Sem protocolo"}
           </p>
-          <h3 className="mt-0.5 truncate text-sm font-semibold leading-tight text-slate-950">
-            {atendimento.paciente_nome || "Paciente não informado"}
-          </h3>
           {labMeta ? (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5">
               <Image
@@ -127,6 +124,12 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
           </div>
         </div>
       </div>
+
+      <Link href={`/atendimentos/${atendimento.id}`} className="mb-2 block">
+        <h3 className="truncate text-sm font-semibold leading-tight text-slate-950">
+          {atendimento.paciente_nome || "Paciente não informado"}
+        </h3>
+      </Link>
 
       <Link href={`/atendimentos/${atendimento.id}`} className="block">
         <div className="grid gap-1.5 text-xs text-slate-600">
