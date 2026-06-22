@@ -128,6 +128,7 @@ A interface recarrega o atendimento e mostra `atendimentos.total_validado` (e o 
 
 - **Filtros do Kanban** (`components/kanban/KanbanFilters.tsx`): texto + **Validado por** (lista nomes de `kanban_usuarios` ativos via SELECT autenticado, somados aos `validado_por` ja presentes) + **Laboratorio** (`alfa`/`penha`). A derivacao usa `labFromUnidade()` em `lib/format.ts` (unidade com "iuna"/"alfa" => Alfa; demais => N. S. da Penha).
 - **Tag/logo** do laboratorio aparece no card (`AtendimentoCard`) e na ficha (`PatientForm`), usando `LAB_META` e as imagens em `public/labs/`.
+- **Layout do card** (`AtendimentoCard`, 21/06/2026): ordem protocolo -> tag do laboratorio (logo + nome) -> **nome do paciente em linha propria full-width** (saiu da coluna estreita que dividia espaco com status/menu e truncava cedo) -> telefone/data -> Total; status e menu de acoes no canto superior direito.
 - **Termo resolvido** (`components/atendimento/TermsNotFoundAlert.tsx`): cada termo tem um botao ✓ que o remove de `atendimentos.termos_nao_encontrados` (a contagem do card some junto).
 - **Unidade** no `PatientForm` sugere as 5 cidades (datalist) e e marcada como obrigatoria.
 

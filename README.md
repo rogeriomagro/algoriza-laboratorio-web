@@ -2,7 +2,7 @@
 
 Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Penha e Alfa Diagnostico revisar, corrigir e validar os atendimentos preparados pelo chatbot.
 
-> Estado documentado: 19/06/2026. Este README descreve o codigo atual da pasta `Ferramenta Web`.
+> Estado documentado: 21/06/2026. Este README descreve o codigo atual da pasta `Ferramenta Web`.
 
 ## O que a aplicacao faz
 
