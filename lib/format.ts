@@ -22,6 +22,38 @@ export function formatCurrency(value: number | string | null | undefined): strin
   }).format(parsed);
 }
 
+// Calcula o total com desconto manual (% OU R$), conforme desconto_tipo.
+// Fonte única usada pelo card, pelo diálogo de validação e (espelhada) pelo PDF.
+// Modo percentual: 0 cai no padrão 20% à vista. Modo reais: valor exato (0 = sem desconto).
+export function totalComDesconto(
+  grossNum: number | null,
+  at: {
+    desconto_tipo?: "percentual" | "reais" | null;
+    desconto_pct?: number | string | null;
+    desconto_reais?: number | string | null;
+  }
+): { final: number | null; economia: number | null; temDesconto: boolean } {
+  if (grossNum === null) return { final: null, economia: null, temDesconto: false };
+
+  if (at.desconto_tipo === "reais") {
+    const reais = Math.max(0, Number(at.desconto_reais ?? 0) || 0);
+    const economia = Math.min(reais, grossNum);
+    return {
+      final: Number((grossNum - economia).toFixed(2)),
+      economia: Number(economia.toFixed(2)),
+      temDesconto: economia > 0,
+    };
+  }
+
+  const pctStored = Number(at.desconto_pct ?? 0) || 0;
+  const pct = pctStored > 0 ? pctStored : 20; // padrão 20% à vista
+  return {
+    final: Number((grossNum * (1 - pct / 100)).toFixed(2)),
+    economia: Number((grossNum * (pct / 100)).toFixed(2)),
+    temDesconto: pct > 0,
+  };
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "-";
   const date = new Date(value);

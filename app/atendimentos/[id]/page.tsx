@@ -14,7 +14,7 @@ import { CatalogAutocomplete } from "@/components/exames/CatalogAutocomplete";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { supabase } from "@/lib/supabase/client";
 import type { Atendimento, AtendimentoExame } from "@/lib/supabase/types";
-import { formatCurrency, formatDate, parseCurrency } from "@/lib/format";
+import { formatCurrency, formatDate, parseCurrency, totalComDesconto } from "@/lib/format";
 import { READONLY_STATUS } from "@/lib/status";
 import { useRealtimeAtendimento } from "@/hooks/useRealtimeAtendimento";
 import { useValidatorName } from "@/hooks/useValidatorName";
@@ -499,13 +499,16 @@ function AtendimentoPageContent() {
             <p>Telefone: {atendimento.telefone || "-"}</p>
             <p>Total validado: {formatCurrency(atendimento.total_validado)}</p>
             {(() => {
-              const descStored = Number(atendimento.desconto_pct ?? 0) || 0;
-              const desc = descStored > 0 ? descStored : 20; // padrão 20%
               const bruto = parseCurrency(atendimento.total_validado);
-              if (desc <= 0 || bruto === null) return null;
+              const { final, economia, temDesconto } = totalComDesconto(bruto, atendimento);
+              if (!temDesconto || final === null) return null;
+              const rotulo =
+                atendimento.desconto_tipo === "reais"
+                  ? `desconto de ${formatCurrency(economia)}`
+                  : `${Number(atendimento.desconto_pct ?? 0) || 20}%`;
               return (
                 <p className="font-medium text-brand-forest">
-                  Total com desconto ({desc}%): {formatCurrency(bruto * (1 - desc / 100))}
+                  Total com desconto ({rotulo}): {formatCurrency(final)}
                 </p>
               );
             })()}

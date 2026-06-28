@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { AlertCircle, CalendarClock, MoreHorizontal, Phone, XCircle } from "lucide-react";
 import type { Atendimento } from "@/lib/supabase/types";
-import { LAB_META, formatCurrency, formatDate, formatPhone, labFromUnidade, parseCurrency } from "@/lib/format";
+import { LAB_META, formatCurrency, formatDate, formatPhone, labFromUnidade, parseCurrency, totalComDesconto } from "@/lib/format";
 import { supabase } from "@/lib/supabase/client";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
@@ -20,10 +20,9 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const grossTotal = atendimento.total_validado ?? atendimento.total_bruto;
-  const descStored = Number(atendimento.desconto_pct ?? 0) || 0;
-  const descontoPct = descStored > 0 ? descStored : 20; // padrão 20%
   const grossNum = parseCurrency(grossTotal);
-  const total = grossNum === null ? grossTotal : grossNum * (1 - descontoPct / 100);
+  const { final: totalComDesc } = totalComDesconto(grossNum, atendimento);
+  const total = grossNum === null ? grossTotal : totalComDesc;
   const labMeta = labFromUnidade(atendimento.unidade_preferida);
   const missingCount = Array.isArray(atendimento.termos_nao_encontrados)
     ? atendimento.termos_nao_encontrados.length

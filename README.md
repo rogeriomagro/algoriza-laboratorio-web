@@ -12,7 +12,7 @@ Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Pen
 - permite editar os dados do paciente e da prescricao;
 - permite incluir, excluir do total e corrigir exames individualmente;
 - pesquisa exames por nome, SKU e sinonimos no `catalogo_exames`;
-- aplica **desconto manual (%)** por atendimento e recalcula o total exibido;
+- aplica **desconto manual em % ou R$** por atendimento (toggle no resumo; o último editado vence) e recalcula o total exibido;
 - define a **validade do orcamento** (dias, padrao 30, editavel) usada no PDF;
 - marca exames como cobertos por **SUS/Unimed** (zera o exame no orcamento);
 - recalcula o total validado no banco (excluindo exames cobertos);
@@ -73,7 +73,7 @@ n8n salva atendimento
 - O total oficial vem de `atendimentos.total_validado`.
 - Alteracoes nos exames sao gravadas em `atendimento_exames`, nunca no catalogo mestre.
 - O trigger `recalc_total_validado()` recalcula o total usando exames com `incluido = true` **e `cobertura IS NULL`** (exames cobertos por SUS/Unimed saem zerados).
-- O **desconto manual** (`atendimentos.desconto_pct`) NAO entra em `total_validado`; o total final exibido/PDF = `total_validado * (1 - desconto_pct/100)`.
+- O **desconto manual** NAO entra em `total_validado`; e aplicado na exibicao/PDF. Pode ser **% ** (`desconto_pct`, padrao 20%) **ou R$** (`desconto_reais`), conforme `desconto_tipo` (o ultimo editado na web vence). No modo R$, total final = `total_validado - desconto_reais`.
 - O desconto vem com **20% por padrao**: quando o valor salvo e 0, a tela (card, dialogo de validar e total do quadro) **exibe/aplica 20%** — sem precisar de SQL e coerente com o PDF, que ja aplicava 20% a vista. O operador pode trocar por outro valor.
 - No PDF, quando ha desconto especial ele **substitui** os 20% a vista (nao soma); sem desconto, segue os 20% normais.
 - Validar exige telefone e pelo menos um exame incluido.

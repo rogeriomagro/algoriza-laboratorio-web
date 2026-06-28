@@ -11,9 +11,16 @@ interface TotalSummaryProps {
   onSave: (patch: Partial<Atendimento>) => Promise<void>;
 }
 
+type ModoDesconto = "percentual" | "reais";
+
 function clampPct(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, value));
+}
+
+function clampReais(value: number): number {
+  if (!Number.isFinite(value) || value < 0) return 0;
+  return Number(value.toFixed(2));
 }
 
 function clampDays(value: number): number {
@@ -23,12 +30,21 @@ function clampDays(value: number): number {
 
 export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSummaryProps) {
   const bruto = parseCurrency(atendimento.total_validado);
-  // Padrão de desconto = 20%: quando o valor salvo for 0 (ou vazio), exibe/aplica 20.
-  const descontoSalvo = clampPct(Number(atendimento.desconto_pct ?? 0) || 0);
-  const descontoInicial = descontoSalvo > 0 ? descontoSalvo : 20;
-  const [desconto, setDesconto] = useState(String(descontoInicial));
+
+  const tipoSalvo: ModoDesconto = atendimento.desconto_tipo === "reais" ? "reais" : "percentual";
+  const pctSalvo = clampPct(Number(atendimento.desconto_pct ?? 0) || 0);
+  const reaisSalvo = clampReais(Number(atendimento.desconto_reais ?? 0) || 0);
   const validadeSalva = clampDays(Number(atendimento.validade_dias ?? 30) || 30);
+
+  const [modo, setModo] = useState<ModoDesconto>(tipoSalvo);
+  // Padrão de desconto percentual = 20% (quando salvo é 0/vazio).
+  const [desconto, setDesconto] = useState(String(pctSalvo > 0 ? pctSalvo : 20));
+  const [descontoReais, setDescontoReais] = useState(reaisSalvo > 0 ? String(reaisSalvo).replace(".", ",") : "");
   const [validade, setValidade] = useState(String(validadeSalva));
+
+  useEffect(() => {
+    setModo(atendimento.desconto_tipo === "reais" ? "reais" : "percentual");
+  }, [atendimento.desconto_tipo]);
 
   useEffect(() => {
     const s = clampPct(Number(atendimento.desconto_pct ?? 0) || 0);
@@ -36,19 +52,53 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
   }, [atendimento.desconto_pct]);
 
   useEffect(() => {
+    const r = clampReais(Number(atendimento.desconto_reais ?? 0) || 0);
+    setDescontoReais(r > 0 ? String(r).replace(".", ",") : "");
+  }, [atendimento.desconto_reais]);
+
+  useEffect(() => {
     setValidade(String(clampDays(Number(atendimento.validade_dias ?? 30) || 30)));
   }, [atendimento.validade_dias]);
 
   const descontoNum = clampPct(Number(desconto.replace(",", ".")) || 0);
-  const final = bruto === null ? null : Number((bruto * (1 - descontoNum / 100)).toFixed(2));
-  const economia = bruto === null ? null : Number((bruto * (descontoNum / 100)).toFixed(2));
-  const temDesconto = descontoNum > 0;
+  const reaisNum = clampReais(Number(descontoReais.replace(",", ".")) || 0);
 
-  async function commit() {
+  let economia: number | null = null;
+  let final: number | null = null;
+  let temDesconto = false;
+  if (bruto !== null) {
+    if (modo === "reais") {
+      // Modo R$: o valor é o desconto exato; 0 = sem desconto (sem piso de 20%).
+      economia = Number(Math.min(reaisNum, bruto).toFixed(2));
+      final = Number((bruto - economia).toFixed(2));
+      temDesconto = economia > 0;
+    } else {
+      // Modo %: 0 cai no padrão 20% à vista.
+      const pct = descontoNum > 0 ? descontoNum : 20;
+      economia = Number((bruto * (pct / 100)).toFixed(2));
+      final = Number((bruto * (1 - pct / 100)).toFixed(2));
+      temDesconto = pct > 0;
+    }
+  }
+
+  async function switchModo(m: ModoDesconto) {
+    if (m === modo || readOnly || saving) return;
+    setModo(m);
+    if (m !== tipoSalvo) await onSave({ desconto_tipo: m });
+  }
+
+  async function commitPct() {
     const novo = clampPct(Number(desconto.replace(",", ".")) || 0);
     setDesconto(String(novo));
-    if (novo === descontoSalvo) return;
-    await onSave({ desconto_pct: novo });
+    if (novo === pctSalvo && tipoSalvo === "percentual") return;
+    await onSave({ desconto_pct: novo, desconto_tipo: "percentual" });
+  }
+
+  async function commitReais() {
+    const novo = clampReais(Number(descontoReais.replace(",", ".")) || 0);
+    setDescontoReais(novo > 0 ? String(novo).replace(".", ",") : "");
+    if (novo === reaisSalvo && tipoSalvo === "reais") return;
+    await onSave({ desconto_reais: novo, desconto_tipo: "reais" });
   }
 
   async function commitValidade() {
@@ -57,6 +107,11 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
     if (novo === validadeSalva) return;
     await onSave({ validade_dias: novo });
   }
+
+  const toggleBtn = (m: ModoDesconto, label: string) =>
+    `px-2 py-1 text-xs font-semibold transition ${
+      modo === m ? "bg-brand-forest text-white" : "bg-white text-slate-500 hover:bg-brand-mint/50"
+    }`;
 
   return (
     <>
@@ -72,23 +127,54 @@ export function TotalSummary({ atendimento, readOnly, saving, onSave }: TotalSum
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3">
-          <label className="field-label text-brand-forest/70" htmlFor="desconto-pct">
+          <label className="field-label text-brand-forest/70" htmlFor="desconto-input">
             Desconto manual
           </label>
-          <div className="relative w-24">
-            <input
-              id="desconto-pct"
-              inputMode="decimal"
-              className="field-input h-9 !pr-8 text-right text-sm"
-              value={desconto}
-              disabled={readOnly || saving || bruto === null}
-              onChange={(event) => setDesconto(event.target.value.replace(/[^0-9.,]/g, ""))}
-              onBlur={commit}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") (event.target as HTMLInputElement).blur();
-              }}
-            />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex shrink-0 overflow-hidden rounded-md border border-brand-emerald/30">
+              <button
+                type="button"
+                className={toggleBtn("percentual", "%")}
+                disabled={readOnly || saving || bruto === null}
+                onClick={() => switchModo("percentual")}
+                title="Desconto em porcentagem"
+              >
+                %
+              </button>
+              <button
+                type="button"
+                className={toggleBtn("reais", "R$")}
+                disabled={readOnly || saving || bruto === null}
+                onClick={() => switchModo("reais")}
+                title="Desconto em reais"
+              >
+                R$
+              </button>
+            </div>
+            <div className="relative w-24">
+              <input
+                id="desconto-input"
+                inputMode="decimal"
+                className={`field-input h-9 text-right text-sm ${modo === "reais" ? "!pl-9" : "!pr-8"}`}
+                value={modo === "reais" ? descontoReais : desconto}
+                placeholder={modo === "reais" ? "0,00" : "0"}
+                disabled={readOnly || saving || bruto === null}
+                onChange={(event) => {
+                  const v = event.target.value.replace(/[^0-9.,]/g, "");
+                  if (modo === "reais") setDescontoReais(v);
+                  else setDesconto(v);
+                }}
+                onBlur={() => (modo === "reais" ? commitReais() : commitPct())}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") (event.target as HTMLInputElement).blur();
+                }}
+              />
+              {modo === "reais" ? (
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">R$</span>
+              ) : (
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
+              )}
+            </div>
           </div>
         </div>
 

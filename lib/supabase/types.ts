@@ -34,6 +34,8 @@ export interface Atendimento {
   total_bruto: number | string | null;
   total_validado: number | string | null;
   desconto_pct: number | string | null;
+  desconto_tipo: "percentual" | "reais" | null;
+  desconto_reais: number | string | null;
   validade_dias: number | string | null;
   status: AtendimentoStatus;
   termos_nao_encontrados: string[] | null;

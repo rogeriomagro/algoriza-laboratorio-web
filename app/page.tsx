@@ -12,7 +12,7 @@ import { STATUS_ORDER } from "@/lib/status";
 import { useRealtimeAtendimentos } from "@/hooks/useRealtimeAtendimentos";
 
 const KANBAN_COLUMNS =
-  "id,protocolo,telefone,responsavel_nome,paciente_nome,medico_solicitante,total_validado,total_bruto,desconto_pct,status,termos_nao_encontrados,unidade_preferida,validado_por,created_at,updated_at";
+  "id,protocolo,telefone,responsavel_nome,paciente_nome,medico_solicitante,total_validado,total_bruto,desconto_pct,desconto_tipo,desconto_reais,status,termos_nao_encontrados,unidade_preferida,validado_por,created_at,updated_at";
 
 function KanbanPageContent() {
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
