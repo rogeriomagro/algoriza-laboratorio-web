@@ -118,3 +118,43 @@ export interface SugestaoCatalogo {
   created_at: string | null;
   updated_at: string | null;
 }
+
+export interface AgendaConfig {
+  id: number | string;
+  unidade: string;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fim: string;
+  slot_min: number;
+  capacidade: number;
+  ativo: boolean;
+}
+
+export interface AgendaExcecao {
+  id: number | string;
+  unidade: string | null;
+  data: string;
+  tipo: "bloqueio" | "especial";
+  hora_inicio: string | null;
+  hora_fim: string | null;
+  motivo: string | null;
+  created_at: string | null;
+}
+
+export type AgendamentoStatus =
+  | "pendente"
+  | "confirmado"
+  | "cancelado"
+  | "expirado"
+  | "realizado";
+
+export interface Agendamento {
+  id: string;
+  atendimento_id: string | null;
+  unidade: string;
+  data: string;
+  hora: string;
+  status: AgendamentoStatus;
+  expira_em: string | null;
+  created_at: string | null;
+}

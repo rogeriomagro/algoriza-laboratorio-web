@@ -23,7 +23,7 @@ Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Pen
 - registra o nome do usuario autenticado como validador;
 - chama o webhook do n8n quando o atendimento e validado;
 - mantem atendimentos cancelados no banco, mas fora do quadro ativo;
-- tem uma aba **Calendario** (`/calendario`) ainda **somente visual** (estado local, sem banco/agente).
+- tem uma aba **Calendario** (`/calendario`) **conectada ao banco** (agenda por unidade): le `agenda_config`/`agenda_excecoes`/`agendamentos`, mostra horarios e ocupacao por dia e permite bloquear/desbloquear datas. *(Edicao de horarios/capacidade por dia da semana ainda via SQL em `agenda_config`; integracao com o agente e fase seguinte.)*
 
 ## Stack
 
@@ -41,7 +41,7 @@ Aplicacao interna em Next.js para a equipe dos Laboratorios Nossa Senhora da Pen
 | `/login` | Login da equipe pelo Supabase Auth |
 | `/` | Kanban de atendimentos (com filtros de validador e laboratorio) |
 | `/atendimentos/[id]` | Revisao e validacao de um atendimento |
-| `/calendario` | Calendario de coletas — **somente front-end** (estado local, sem persistencia) |
+| `/calendario` | Calendario de coletas **por unidade** — conectado ao banco (agenda_config/agendamentos/agenda_excecoes) |
 | `/usuarios` | Criacao, listagem e ativacao operacional de usuarios |
 | `/sugestoes-base` | Placeholder da futura curadoria do catalogo; acesso desabilitado no menu |
 | `/api/users` | API server-side de gestao de usuarios |

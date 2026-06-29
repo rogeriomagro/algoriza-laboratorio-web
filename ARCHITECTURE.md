@@ -29,7 +29,7 @@ app/
   page.tsx                     Kanban (com filtros de validador e laboratorio)
   login/page.tsx               autenticacao
   atendimentos/[id]/page.tsx   revisao do atendimento
-  calendario/page.tsx          calendario de coletas (somente front-end)
+  calendario/page.tsx          calendario de coletas por unidade (conectado ao banco)
   usuarios/page.tsx            gestao de usuarios
   sugestoes-base/page.tsx      placeholder futuro
   api/users/route.ts            API administrativa
@@ -132,9 +132,11 @@ A interface recarrega o atendimento e mostra `atendimentos.total_validado` (e o 
 - **Termo resolvido** (`components/atendimento/TermsNotFoundAlert.tsx`): cada termo tem um botao ✓ que o remove de `atendimentos.termos_nao_encontrados` (a contagem do card some junto).
 - **Unidade** no `PatientForm` sugere as 5 cidades (datalist) e e marcada como obrigatoria.
 
-## Calendario (somente front-end)
+## Calendario (conectado ao banco)
 
-`/calendario` (`components/calendario/CalendarioView.tsx`) e uma prova visual: abre/fecha dias (incl. fins de semana), abre/fecha horarios, capacidade e feriados, tudo em **estado local React**. Nao ha banco, agente nem persistencia ainda — o desenho tecnico da agenda real esta em `../documentacao/agenda-plano.md`.
+`/calendario` (`components/calendario/CalendarioView.tsx`) e a agenda **por unidade**: seletor das 5 unidades canonicas (`AGENDA_UNIDADES` em `lib/format.ts`) + grade do mes lendo `agenda_config` (faixas/capacidade por dia da semana) e `agenda_excecoes` (feriados/bloqueios); o painel do dia gera os slots e mostra a **ocupacao real** (`usadas/capacidade`) a partir de `agendamentos` (status `confirmado` + `pendente` nao expirado), e permite **bloquear/desbloquear** uma data (insert/delete em `agenda_excecoes`). A edicao de horarios/capacidade por dia da semana ainda e via SQL em `agenda_config` (futura tela admin); a integracao com o agente (reserva na conversa) e a fase seguinte. Backend: `../documentacao/build/agenda_schema.sql` + `agenda_rpcs.sql`; desenho em `../documentacao/agenda-plano.md`.
+
+> **Seguranca:** as tabelas da agenda foram criadas sem RLS (acesso via anon key). Para producao, adicionar policies (ex.: acesso a `authenticated`).
 
 ## Validacao e n8n
 
@@ -176,7 +178,7 @@ O Kanban escuta mudancas em `atendimentos`. A tela de detalhe escuta `atendiment
 ## Limitacoes atuais
 
 - A aba **Base de exames** esta desabilitada e a rota e apenas placeholder.
-- A aba **Calendario** e somente visual (estado local) — sem banco, agente nem agendamento real.
+- A aba **Calendario** ja le/escreve o banco (agenda por unidade: ver/bloquear datas, ocupacao), mas **falta**: edicao de horarios/capacidade na UI (hoje via SQL), integracao com o agente (reserva na conversa) e RLS nas tabelas da agenda.
 - O status **`convertido`** existe (coluna + botao com senha); falta o **relatorio de comissao** (somar convertidos por usuario).
 - Nao ha botao de **reabrir/editar atendimento ja enviado** com login restrito.
 - Inativar um perfil nao revoga automaticamente o Supabase Auth.

@@ -181,6 +181,17 @@ export const UNIDADES = [
   "Piaçu",
 ] as const;
 
+// Unidades canônicas da AGENDA (slug = chave em agenda_config/agendamentos; igual ao norm_unidade do banco).
+export const AGENDA_UNIDADES = [
+  { slug: "ibatiba_matriz", label: "Ibatiba - Matriz", lab: "penha" as const },
+  { slug: "ibatiba_centro", label: "Ibatiba - Centro", lab: "penha" as const },
+  { slug: "iuna", label: "Iúna (Alfa)", lab: "alfa" as const },
+  { slug: "brejetuba", label: "Brejetuba", lab: "penha" as const },
+  { slug: "piacu", label: "Piaçu", lab: "penha" as const },
+] as const;
+
+export type AgendaUnidadeSlug = (typeof AGENDA_UNIDADES)[number]["slug"];
+
 export type LabTag = "alfa" | "penha";
 
 export interface LabMeta {
