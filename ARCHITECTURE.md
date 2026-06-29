@@ -86,7 +86,7 @@ Ao abrir um atendimento `aguardando_validacao`, a pagina executa um update condi
 
 ### `atendimentos`
 
-Guarda paciente, prescricao, totais, status, protocolo e rastreio (`validado_por`, `validado_em`, `enviado_em`). Inclui **`desconto_pct`** (NUMERIC 0–100) — o desconto manual concedido pela equipe naquele orcamento.
+Guarda paciente, prescricao, totais, status, protocolo e rastreio (`validado_por`, `validado_em`, `enviado_em`). Desconto manual: **`desconto_tipo`** (`percentual`|`reais`) + **`desconto_pct`** (NUMERIC 0–100) + **`desconto_reais`** (NUMERIC) — o ultimo editado vence. Tambem `validade_dias` (validade do PDF) e `aviso_espera_em` (controle do aviso proativo de espera, usado pelo workflow `Aviso de espera`).
 
 ### `atendimento_exames`
 
@@ -117,9 +117,9 @@ Salvar uma edicao define `editado_manual = true`. Selecoes do catalogo usam `mat
 
 O frontend nao e a fonte de verdade do total. O banco executa `recalc_total_validado()` depois de mudancas em `atendimento_exames` e soma os precos das linhas com `incluido = true` **e `cobertura IS NULL`** (exames cobertos por SUS/Unimed nao entram).
 
-O **desconto manual** (`atendimentos.desconto_pct`) **nao** e gravado em `total_validado` — e aplicado na exibicao: total final = `total_validado * (1 - desconto_pct/100)`. Assim, mudar a % nao depende do trigger (que so dispara em `atendimento_exames`).
+O **desconto manual** **nao** e gravado em `total_validado` — e aplicado na exibicao. Pode ser **% ou R$**, conforme `atendimentos.desconto_tipo` (`percentual` | `reais`), gravado a cada edicao (o **ultimo editado vence**). Modo %: total final = `total_validado * (1 - desconto_pct/100)`, padrao 20%. Modo R$: total final = `total_validado - desconto_reais` (0 = sem desconto). O calculo e centralizado em `totalComDesconto()` (`lib/format.ts`), usado pelo card, pelo dialogo de validacao e espelhado no PDF. Assim, mudar o desconto nao depende do trigger (que so dispara em `atendimento_exames`).
 
-- **Desconto e validade** (`components/atendimento/TotalSummary.tsx`): campo de % que salva `desconto_pct` (mostra o "Total com desconto") e campo de **validade (dias)** que salva `atendimentos.validade_dias` (padrao 30) — usada pelo PDF. O desconto tem **padrao 20%**: quando `desconto_pct` salvo e 0, o card/dialogo/quadro exibem e aplicam 20% (igual ao PDF, que ja usava 20% a vista) — sem depender de SQL.
+- **Desconto e validade** (`components/atendimento/TotalSummary.tsx`): toggle **% / R$** + campo (salva `desconto_pct`/`desconto_reais` + `desconto_tipo`) mostrando o "Total com desconto", e campo de **validade (dias)** que salva `atendimentos.validade_dias` (padrao 30) — usada pelo PDF. No modo %, quando `desconto_pct` salvo e 0, exibe/aplica o padrao 20% (igual ao PDF).
 - **Cobertura** (`components/exames/ExamRow.tsx`): botoes **SUS/Unimed** por exame que salvam `cobertura` (e zeram o exame); o trigger recalcula o total ao mudar `cobertura`.
 
 A interface recarrega o atendimento e mostra `atendimentos.total_validado` (e o total com desconto quando houver).
