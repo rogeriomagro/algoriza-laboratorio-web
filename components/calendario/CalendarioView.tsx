@@ -1,10 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Lock, Unlock, Check } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, ChevronLeft, ChevronRight, Lock, Unlock, Check, ChevronDown, ExternalLink, User } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { AGENDA_UNIDADES } from "@/lib/format";
+import { AGENDA_UNIDADES, formatCurrency, formatPhone } from "@/lib/format";
 import type { AgendaConfig, AgendaExcecao, Agendamento } from "@/lib/supabase/types";
+
+type AgendamentoCal = Agendamento & {
+  atendimentos?: {
+    paciente_nome: string | null;
+    protocolo: string | null;
+    telefone: string | null;
+    plano_convenio: string | null;
+    total_validado: number | string | null;
+  } | null;
+};
 
 // ===================================================================
 // Calendário de coletas — conectado ao banco (por unidade).
@@ -61,10 +72,11 @@ export function CalendarioView() {
   const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [config, setConfig] = useState<AgendaConfig[]>([]);
   const [excecoes, setExcecoes] = useState<AgendaExcecao[]>([]);
-  const [ags, setAgs] = useState<Agendamento[]>([]);
+  const [ags, setAgs] = useState<AgendamentoCal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [expandedAg, setExpandedAg] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const [working, setWorking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -93,7 +105,7 @@ export function CalendarioView() {
         .or(`unidade.is.null,unidade.eq.${unidade}`),
       supabase
         .from("agendamentos")
-        .select("*")
+        .select("id, atendimento_id, unidade, data, hora, status, expira_em, created_at, atendimentos(paciente_nome, protocolo, telefone, plano_convenio, total_validado)")
         .eq("unidade", unidade)
         .gte("data", monthStart)
         .lte("data", monthEnd)
@@ -106,7 +118,7 @@ export function CalendarioView() {
     } else {
       setConfig((cfgRes.data ?? []) as AgendaConfig[]);
       setExcecoes((excRes.data ?? []) as AgendaExcecao[]);
-      setAgs((agRes.data ?? []) as Agendamento[]);
+      setAgs((agRes.data ?? []) as unknown as AgendamentoCal[]);
     }
     setLoading(false);
   }, [unidade, year, month]);
@@ -121,29 +133,20 @@ export function CalendarioView() {
     return map;
   }, [config]);
 
-  // Reservas ativas por "data|hora"
-  const reservasPorSlot = useMemo(() => {
-    const now = Date.now();
+  function agAtivo(a: AgendamentoCal) {
+    return a.status === "confirmado" || (a.status === "pendente" && !!a.expira_em && new Date(a.expira_em).getTime() > Date.now());
+  }
+
+  const reservasPorDia = useMemo(() => {
     const map = new Map<string, number>();
-    for (const a of ags) {
-      const ativo = a.status === "confirmado" || (a.status === "pendente" && a.expira_em && new Date(a.expira_em).getTime() > now);
-      if (!ativo) continue;
-      const k = `${a.data}|${hhmm(a.hora)}`;
-      map.set(k, (map.get(k) ?? 0) + 1);
-    }
+    for (const a of ags) if (agAtivo(a)) map.set(a.data, (map.get(a.data) ?? 0) + 1);
     return map;
   }, [ags]);
 
-  const reservasPorDia = useMemo(() => {
-    const now = Date.now();
-    const map = new Map<string, number>();
-    for (const a of ags) {
-      const ativo = a.status === "confirmado" || (a.status === "pendente" && a.expira_em && new Date(a.expira_em).getTime() > now);
-      if (!ativo) continue;
-      map.set(a.data, (map.get(a.data) ?? 0) + 1);
-    }
-    return map;
-  }, [ags]);
+  const agsDoDia = useMemo(
+    () => (selectedKey ? ags.filter((a) => a.data === selectedKey && agAtivo(a)) : []),
+    [ags, selectedKey]
+  );
 
   const bloqueioDe = useCallback(
     (key: string) => excecoes.find((e) => e.data === key && e.tipo === "bloqueio") ?? null,
@@ -345,15 +348,59 @@ export function CalendarioView() {
               ) : (
                 <div className="mt-4 flex min-h-0 flex-1 flex-col">
                   <span className="field-label">Horários e ocupação</span>
-                  <div className="mt-2 space-y-1.5 overflow-y-auto pr-1" style={{ maxHeight: 300 }}>
+                  <div className="mt-2 space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 340 }}>
                     {slotsFromConfig(selectedInfo.cfg).map((hora) => {
-                      const usadas = reservasPorSlot.get(`${selectedKey}|${hora}`) ?? 0;
+                      const lista = agsDoDia.filter((a) => hhmm(a.hora) === hora);
                       const cap = selectedInfo.cfg!.capacidade;
+                      const usadas = lista.length;
                       const cheio = usadas >= cap;
                       return (
-                        <div key={hora} className={`flex items-center justify-between rounded-lg border px-3 py-1.5 text-sm ${cheio ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white"}`}>
-                          <span className="font-medium text-slate-800">{hora}</span>
-                          <span className={cheio ? "text-rose-700" : "text-slate-600"}>{usadas}/{cap} {cheio ? "(lotado)" : "vagas"}</span>
+                        <div key={hora} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                          <div className={`flex items-center justify-between px-3 py-1.5 ${cheio ? "bg-rose-50" : ""}`}>
+                            <span className="text-sm font-semibold text-slate-800">{hora}</span>
+                            <span className={`text-xs ${cheio ? "text-rose-700" : "text-slate-500"}`}>{usadas}/{cap} {cheio ? "(lotado)" : "vagas"}</span>
+                          </div>
+                          {lista.length > 0 ? (
+                            <div className="border-t border-slate-100">
+                              {lista.map((a) => {
+                                const pac = a.atendimentos;
+                                const aberto = expandedAg === a.id;
+                                return (
+                                  <div key={a.id} className="border-b border-slate-100 last:border-b-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => setExpandedAg(aberto ? null : a.id)}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition hover:bg-slate-50"
+                                    >
+                                      <User className="h-3.5 w-3.5 shrink-0 text-brand-emerald" />
+                                      <span className="min-w-0 flex-1 truncate font-medium text-slate-800">
+                                        {pac?.paciente_nome || "Reserva sem ficha"}
+                                      </span>
+                                      <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${a.status === "confirmado" ? "bg-brand-emerald/10 text-brand-forest" : "bg-amber-100 text-amber-800"}`}>
+                                        {a.status}
+                                      </span>
+                                      <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition ${aberto ? "rotate-180" : ""}`} />
+                                    </button>
+                                    {aberto ? (
+                                      <div className="space-y-1 bg-slate-50/70 px-3 pb-2.5 pt-1 text-xs text-slate-600">
+                                        {pac?.protocolo ? <p>Protocolo: <span className="font-medium text-slate-800">{pac.protocolo}</span></p> : null}
+                                        {pac?.telefone ? <p>Telefone: {formatPhone(pac.telefone)}</p> : null}
+                                        {pac?.plano_convenio ? <p>Convênio: {pac.plano_convenio}</p> : null}
+                                        {pac?.total_validado != null ? <p>Total: {formatCurrency(pac.total_validado)}</p> : null}
+                                        {a.atendimento_id ? (
+                                          <Link href={`/atendimentos/${a.atendimento_id}`} className="mt-1 inline-flex items-center gap-1 font-medium text-brand-forest hover:underline">
+                                            <ExternalLink className="h-3 w-3" /> Abrir atendimento
+                                          </Link>
+                                        ) : (
+                                          <p className="italic text-slate-400">Sem ficha vinculada</p>
+                                        )}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : null}
                         </div>
                       );
                     })}
