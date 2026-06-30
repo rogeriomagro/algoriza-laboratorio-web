@@ -192,6 +192,22 @@ export const AGENDA_UNIDADES = [
 
 export type AgendaUnidadeSlug = (typeof AGENDA_UNIDADES)[number]["slug"];
 
+// Mapeia texto livre (unidade_preferida) -> slug canonico (espelha o norm_unidade do banco).
+export function normUnidade(txt: string | null | undefined): AgendaUnidadeSlug | null {
+  const t = (txt ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (t.includes("matriz")) return "ibatiba_matriz";
+  if (t.includes("centro")) return "ibatiba_centro";
+  if (t.includes("iuna") || t.includes("alfa")) return "iuna";
+  if (t.includes("brejetuba")) return "brejetuba";
+  if (t.includes("piacu")) return "piacu";
+  if (t.includes("ibatiba")) return "ibatiba_matriz";
+  return null;
+}
+
+export function agendaUnidadeLabel(slug: string | null | undefined): string {
+  return AGENDA_UNIDADES.find((u) => u.slug === slug)?.label ?? (slug ?? "—");
+}
+
 export type LabTag = "alfa" | "penha";
 
 export interface LabMeta {

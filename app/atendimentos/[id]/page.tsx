@@ -9,6 +9,7 @@ import { PatientForm } from "@/components/atendimento/PatientForm";
 import { PrescriptionPanel } from "@/components/atendimento/PrescriptionPanel";
 import { TermsNotFoundAlert } from "@/components/atendimento/TermsNotFoundAlert";
 import { TotalSummary } from "@/components/atendimento/TotalSummary";
+import { AgendamentoPanel } from "@/components/atendimento/AgendamentoPanel";
 import { ExamList } from "@/components/exames/ExamList";
 import { CatalogAutocomplete } from "@/components/exames/CatalogAutocomplete";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -446,6 +447,8 @@ function AtendimentoPageContent() {
 
           <div className="space-y-3">
             <TotalSummary atendimento={atendimento} readOnly={readOnly} saving={saving} onSave={saveAtendimento} />
+
+            <AgendamentoPanel atendimento={atendimento} readOnly={atendimento.status === "cancelado"} />
 
             <section className="section">
               <h2 className="section-title">Rastreio do atendimento</h2>
