@@ -4,7 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { CalendarClock, Check, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import type { Atendimento, Agendamento } from "@/lib/supabase/types";
-import { AGENDA_UNIDADES, agendaUnidadeLabel, formatDateOnly, normUnidade } from "@/lib/format";
+import {
+  AGENDA_UNIDADES,
+  agendaUnidadeLabel,
+  formatDateOnly,
+  formatSchedulePreference,
+  normUnidade,
+  parseSchedulePreference,
+} from "@/lib/format";
 
 interface Props {
   atendimento: Atendimento;
@@ -15,13 +22,15 @@ interface Props {
 // preferência; a equipe finaliza aqui). Grava em `agendamentos` ligado ao
 // atendimento → aparece no Calendário e no card.
 export function AgendamentoPanel({ atendimento, readOnly }: Props) {
+  // Pré-preenche o formulário com a preferência do cliente (formato rígido ISO).
+  const pref = parseSchedulePreference(atendimento.agendamento_desejado);
   const [ag, setAg] = useState<Agendamento | null>(null);
   const [loading, setLoading] = useState(true);
   const [unidade, setUnidade] = useState<string>(
     normUnidade(atendimento.unidade_preferida) ?? AGENDA_UNIDADES[0].slug
   );
-  const [data, setData] = useState("");
-  const [hora, setHora] = useState("");
+  const [data, setData] = useState(pref?.key ?? "");
+  const [hora, setHora] = useState(pref?.hora ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,13 +67,18 @@ export function AgendamentoPanel({ atendimento, readOnly }: Props) {
       hora,
       status: "confirmado",
     });
-    setSaving(false);
     if (err) {
+      setSaving(false);
       setError(err.message);
       return;
     }
-    setData("");
-    setHora("");
+    // Denormaliza o slot confirmado (ISO rígido) no atendimento — é daqui que o
+    // PDF e o calendário leem a data/hora da coleta.
+    await supabase
+      .from("atendimentos")
+      .update({ agendamento_desejado: `${data} ${hora}` })
+      .eq("id", atendimento.id);
+    setSaving(false);
     await load();
   }
 
@@ -87,7 +101,9 @@ export function AgendamentoPanel({ atendimento, readOnly }: Props) {
 
       <p className="mt-2 text-sm text-slate-600">
         Preferência do paciente:{" "}
-        <span className="font-medium text-slate-800">{atendimento.agendamento_desejado || "não informada"}</span>
+        <span className="font-medium text-slate-800">
+          {formatSchedulePreference(atendimento.agendamento_desejado) || "não informada"}
+        </span>
       </p>
 
       {loading ? (

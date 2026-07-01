@@ -177,9 +177,13 @@ export function CalendarioView() {
   );
 
   // Preferências por dia (só da unidade selecionada, com data ISO parseável).
+  // Exclui atendimentos que JÁ têm coleta confirmada (agendamentos) — esses
+  // aparecem como "agendada", não como "preferência" (evita marcador duplo).
   const prefsPorDia = useMemo(() => {
+    const confirmados = new Set(ags.filter(agAtivo).map((a) => a.atendimento_id));
     const map = new Map<string, Array<{ pref: PrefCal; hora: string | null }>>();
     for (const p of prefs) {
+      if (confirmados.has(p.id)) continue;
       if (normUnidade(p.unidade_preferida) !== unidade) continue;
       const parsed = parseSchedulePreference(p.agendamento_desejado);
       if (!parsed) continue;
@@ -188,7 +192,7 @@ export function CalendarioView() {
       map.set(parsed.key, arr);
     }
     return map;
-  }, [prefs, unidade]);
+  }, [prefs, ags, unidade]);
 
   const prefsDoDia = selectedKey ? prefsPorDia.get(selectedKey) ?? [] : [];
 
@@ -424,7 +428,14 @@ export function CalendarioView() {
                   <span className="field-label">Horários e ocupação</span>
                   <div className="mt-2 space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 340 }}>
                     {slotsFromConfig(selectedInfo.cfg).map((hora) => {
-                      const lista = agsDoDia.filter((a) => hhmm(a.hora) === hora);
+                      // Agrupa por FAIXA do slot (não por igualdade exata): um
+                      // agendamento às 08:06 cai no slot das 08:00 (senão sumia da lista).
+                      const slotStart = timeToMin(hora);
+                      const slotEnd = slotStart + Math.max(5, selectedInfo.cfg!.slot_min || 30);
+                      const lista = agsDoDia.filter((a) => {
+                        const m = timeToMin(a.hora);
+                        return m >= slotStart && m < slotEnd;
+                      });
                       const cap = selectedInfo.cfg!.capacidade;
                       const usadas = lista.length;
                       const cheio = usadas >= cap;
@@ -447,6 +458,7 @@ export function CalendarioView() {
                                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition hover:bg-slate-50"
                                     >
                                       <User className="h-3.5 w-3.5 shrink-0 text-brand-emerald" />
+                                      <span className="shrink-0 text-xs font-semibold text-brand-forest">{hhmm(a.hora)}</span>
                                       <span className="min-w-0 flex-1 truncate font-medium text-slate-800">
                                         {pac?.paciente_nome || "Reserva sem ficha"}
                                       </span>

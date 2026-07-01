@@ -75,6 +75,12 @@ export function formatDateOnly(value: string | null | undefined): string {
   const directMatch = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (directMatch) return directMatch[0];
 
+  // Data ISO pura (AAAA-MM-DD) → formata direto, SEM new Date()/fuso.
+  // (new Date("2026-07-03") vira meia-noite UTC e, convertido p/ São Paulo,
+  // volta um dia — bug que mostrava a coleta no dia anterior.)
+  const isoMatch = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
 

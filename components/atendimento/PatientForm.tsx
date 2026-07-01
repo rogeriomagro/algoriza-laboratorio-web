@@ -10,18 +10,19 @@ import {
   formatBirthDateInput,
   formatCpf,
   formatPhone,
-  formatSchedulePreference,
   labFromUnidade,
 } from "@/lib/format";
 
+// A preferência de coleta (agendamento_desejado) NÃO fica aqui: ela é editada/
+// confirmada no painel "Agendamento da coleta". Deixá-la como input de texto aqui
+// reformatava o ISO no "Salvar dados" e quebrava o Calendário.
 const fields: Array<{ key: keyof Atendimento; label: string; placeholder?: string }> = [
   { key: "paciente_nome", label: "Nome do paciente" },
   { key: "paciente_cpf", label: "CPF" },
   { key: "paciente_nascimento", label: "Nascimento" },
   { key: "paciente_cidade", label: "Cidade" },
   { key: "plano_convenio", label: "Plano ou convênio" },
-  { key: "unidade_preferida", label: "Unidade preferida" },
-  { key: "agendamento_desejado", label: "Agendamento desejado" }
+  { key: "unidade_preferida", label: "Unidade preferida" }
 ];
 
 interface PatientFormProps {
@@ -35,8 +36,7 @@ function normalizePatientForm(form: Record<string, string>): Record<string, stri
   return {
     ...form,
     paciente_cpf: formatCpf(form.paciente_cpf),
-    paciente_nascimento: formatBirthDateInput(form.paciente_nascimento),
-    agendamento_desejado: formatSchedulePreference(form.agendamento_desejado)
+    paciente_nascimento: formatBirthDateInput(form.paciente_nascimento)
   };
 }
 
