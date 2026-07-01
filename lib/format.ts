@@ -136,18 +136,37 @@ export function formatSchedulePreference(value: string | null | undefined): stri
   const input = String(value || "").trim();
   if (!input) return "";
 
-  const match = input.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(.+))?$/i);
+  const match = input.match(/^(\d{4})-(\d{2})-(\d{2})(?:[\sT]+(.+))?$/i);
   if (!match) return input;
 
-  const [, year, month, day, periodRaw] = match;
-  const period = normalizeSearch(periodRaw || "");
+  const [, year, month, day, restRaw] = match;
+  const dmy = `${day}/${month}/${year}`;
+  const rest = (restRaw || "").trim();
 
-  let suffix = "";
-  if (period.includes("manha")) suffix = "período da manhã";
-  else if (period.includes("tarde")) suffix = "período da tarde";
-  else if (period.includes("noite")) suffix = "período da noite";
+  // Formato rígido preferido: AAAA-MM-DD HH:MM -> "DD/MM/AAAA às HH:MM".
+  const time = rest.match(/^(\d{1,2}):(\d{2})/);
+  if (time) return `${dmy} às ${time[1].padStart(2, "0")}:${time[2]}`;
 
-  return suffix ? `${day}/${month}/${year}, ${suffix}` : `${day}/${month}/${year}`;
+  const period = normalizeSearch(rest);
+  if (period.includes("manha")) return `${dmy}, período da manhã`;
+  if (period.includes("tarde")) return `${dmy}, período da tarde`;
+  if (period.includes("noite")) return `${dmy}, período da noite`;
+  return dmy;
+}
+
+// Extrai data (chave AAAA-MM-DD) e hora (HH:MM ou null) de um agendamento no
+// formato rígido ISO. Retorna null quando o texto não começa com uma data ISO
+// (ex.: preferência antiga em texto livre "8h" — não dá para posicionar no calendário).
+export function parseSchedulePreference(
+  value: string | null | undefined
+): { key: string; hora: string | null } | null {
+  const m = String(value || "")
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})(?:[\sT]+(\d{1,2}):(\d{2}))?/);
+  if (!m) return null;
+  const key = `${m[1]}-${m[2]}-${m[3]}`;
+  const hora = m[4] != null ? `${m[4].padStart(2, "0")}:${m[5]}` : null;
+  return { key, hora };
 }
 
 export function describeMatch(match: string | null | undefined): string {

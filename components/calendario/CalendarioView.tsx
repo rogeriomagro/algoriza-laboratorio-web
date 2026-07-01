@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ChevronLeft, ChevronRight, Lock, Unlock, Check, ChevronDown, ExternalLink, User } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { AGENDA_UNIDADES, formatCurrency, formatPhone } from "@/lib/format";
+import { AGENDA_UNIDADES, formatCurrency, formatPhone, normUnidade, parseSchedulePreference } from "@/lib/format";
 import type { AgendaConfig, AgendaExcecao, Agendamento } from "@/lib/supabase/types";
 
 type AgendamentoCal = Agendamento & {
@@ -15,6 +15,21 @@ type AgendamentoCal = Agendamento & {
     plano_convenio: string | null;
     total_validado: number | string | null;
   } | null;
+};
+
+// Preferência de coleta informada pelo cliente (Cenário B): fica em
+// atendimentos.agendamento_desejado (texto rígido ISO). Não é reserva — é um
+// marcador "a confirmar" que a equipe finaliza no card do atendimento.
+type PrefCal = {
+  id: string;
+  paciente_nome: string | null;
+  protocolo: string | null;
+  telefone: string | null;
+  plano_convenio: string | null;
+  total_validado: number | string | null;
+  unidade_preferida: string | null;
+  agendamento_desejado: string | null;
+  status: string | null;
 };
 
 // ===================================================================
@@ -73,6 +88,7 @@ export function CalendarioView() {
   const [config, setConfig] = useState<AgendaConfig[]>([]);
   const [excecoes, setExcecoes] = useState<AgendaExcecao[]>([]);
   const [ags, setAgs] = useState<AgendamentoCal[]>([]);
+  const [prefs, setPrefs] = useState<PrefCal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -95,7 +111,9 @@ export function CalendarioView() {
     setError(null);
     const monthStart = dateKey(year, month, 1);
     const monthEnd = dateKey(year, month, new Date(year, month + 1, 0).getDate());
-    const [cfgRes, excRes, agRes] = await Promise.all([
+    // Início do mês seguinte (chave ISO) — limite superior do range de texto ISO.
+    const nextMonthStart = month === 11 ? dateKey(year + 1, 0, 1) : dateKey(year, month + 1, 1);
+    const [cfgRes, excRes, agRes, prefRes] = await Promise.all([
       supabase.from("agenda_config").select("*").eq("unidade", unidade),
       supabase
         .from("agenda_excecoes")
@@ -110,15 +128,25 @@ export function CalendarioView() {
         .gte("data", monthStart)
         .lte("data", monthEnd)
         .in("status", ["confirmado", "pendente"]),
+      // Preferências de coleta (texto ISO em atendimentos). O range lexicográfico
+      // sobre ISO equivale ao filtro por mês; a unidade é resolvida no cliente
+      // (unidade_preferida é texto livre → normUnidade).
+      supabase
+        .from("atendimentos")
+        .select("id, paciente_nome, protocolo, telefone, plano_convenio, total_validado, unidade_preferida, agendamento_desejado, status")
+        .gte("agendamento_desejado", monthStart)
+        .lt("agendamento_desejado", nextMonthStart)
+        .not("status", "in", "(cancelado,rejeitado)"),
     ]);
-    const firstErr = cfgRes.error || excRes.error || agRes.error;
+    const firstErr = cfgRes.error || excRes.error || agRes.error || prefRes.error;
     if (firstErr) {
       setError(firstErr.message);
-      setConfig([]); setExcecoes([]); setAgs([]);
+      setConfig([]); setExcecoes([]); setAgs([]); setPrefs([]);
     } else {
       setConfig((cfgRes.data ?? []) as AgendaConfig[]);
       setExcecoes((excRes.data ?? []) as AgendaExcecao[]);
       setAgs((agRes.data ?? []) as unknown as AgendamentoCal[]);
+      setPrefs((prefRes.data ?? []) as unknown as PrefCal[]);
     }
     setLoading(false);
   }, [unidade, year, month]);
@@ -147,6 +175,22 @@ export function CalendarioView() {
     () => (selectedKey ? ags.filter((a) => a.data === selectedKey && agAtivo(a)) : []),
     [ags, selectedKey]
   );
+
+  // Preferências por dia (só da unidade selecionada, com data ISO parseável).
+  const prefsPorDia = useMemo(() => {
+    const map = new Map<string, Array<{ pref: PrefCal; hora: string | null }>>();
+    for (const p of prefs) {
+      if (normUnidade(p.unidade_preferida) !== unidade) continue;
+      const parsed = parseSchedulePreference(p.agendamento_desejado);
+      if (!parsed) continue;
+      const arr = map.get(parsed.key) ?? [];
+      arr.push({ pref: p, hora: parsed.hora });
+      map.set(parsed.key, arr);
+    }
+    return map;
+  }, [prefs, unidade]);
+
+  const prefsDoDia = selectedKey ? prefsPorDia.get(selectedKey) ?? [] : [];
 
   const bloqueioDe = useCallback(
     (key: string) => excecoes.find((e) => e.data === key && e.tipo === "bloqueio") ?? null,
@@ -270,6 +314,7 @@ export function CalendarioView() {
               const isToday = cell.key === todayKey;
               const isSelected = cell.key === selectedKey;
               const reservas = reservasPorDia.get(cell.key) ?? 0;
+              const preferencias = prefsPorDia.get(cell.key)?.length ?? 0;
 
               return (
                 <button
@@ -297,6 +342,7 @@ export function CalendarioView() {
                           <Unlock className="h-2.5 w-2.5" /> Aberto
                         </span>
                         {reservas > 0 ? <p className="mt-1 text-[10px] text-slate-500">{reservas} agendada{reservas === 1 ? "" : "s"}</p> : null}
+                        {preferencias > 0 ? <p className="mt-0.5 text-[10px] font-medium text-amber-700">{preferencias} preferência{preferencias === 1 ? "" : "s"}</p> : null}
                       </>
                     ) : (
                       <>
@@ -304,6 +350,7 @@ export function CalendarioView() {
                           <Lock className="h-2.5 w-2.5" /> {isoDow(cell.date) > 5 ? "Fim de semana" : "Fechado"}
                         </span>
                         {info.bloqueio?.motivo ? <p className="mt-1 truncate text-[10px] text-slate-500" title={info.bloqueio.motivo}>{info.bloqueio.motivo}</p> : null}
+                        {preferencias > 0 ? <p className="mt-0.5 text-[10px] font-medium text-amber-700">{preferencias} preferência{preferencias === 1 ? "" : "s"}</p> : null}
                       </>
                     )}
                   </div>
@@ -328,6 +375,33 @@ export function CalendarioView() {
                 <p className="field-label text-brand-forest">Dia selecionado</p>
                 <h2 className="mt-0.5 text-base font-semibold capitalize text-slate-950">{formatLongDate(selectedDate)}</h2>
               </div>
+
+              {prefsDoDia.length > 0 ? (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3">
+                  <p className="text-xs font-semibold text-amber-800">Preferências do cliente (a confirmar)</p>
+                  <ul className="mt-2 space-y-1.5">
+                    {prefsDoDia.map(({ pref, hora }) => (
+                      <li key={pref.id} className="flex items-center gap-2 text-sm">
+                        <User className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                        <span className="min-w-0 flex-1 truncate text-slate-800">{pref.paciente_nome || "Sem nome"}</span>
+                        {hora ? (
+                          <span className="shrink-0 text-xs font-semibold text-amber-800">{hora}</span>
+                        ) : (
+                          <span className="shrink-0 text-xs text-slate-500">sem hora</span>
+                        )}
+                        <Link
+                          href={`/atendimentos/${pref.id}`}
+                          className="shrink-0 text-brand-forest hover:underline"
+                          title="Abrir atendimento"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-[11px] text-amber-700/80">Confirme a coleta no card do atendimento.</p>
+                </div>
+              ) : null}
 
               {!selectedInfo.cfg ? (
                 <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
