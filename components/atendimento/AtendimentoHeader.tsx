@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, BadgeCheck, CheckCircle2, Clock3, Phone, ReceiptText, RotateCcw, UserRound, XCircle } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CheckCircle2, Clock3, Pencil, Phone, ReceiptText, RotateCcw, UserRound, XCircle } from "lucide-react";
 import type { Atendimento } from "@/lib/supabase/types";
 import { formatCurrency, formatDate, formatPhone } from "@/lib/format";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -13,6 +13,8 @@ interface AtendimentoHeaderProps {
   onValidate: () => void;
   onReject: () => void;
   onReturnToWaiting: () => void;
+  canReopen: boolean;
+  onReopen: () => void;
   canConvert: boolean;
   onConvert: () => void;
 }
@@ -24,6 +26,8 @@ export function AtendimentoHeader({
   onValidate,
   onReject,
   onReturnToWaiting,
+  canReopen,
+  onReopen,
   canConvert,
   onConvert
 }: AtendimentoHeaderProps) {
@@ -50,6 +54,12 @@ export function AtendimentoHeader({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {canReopen ? (
+            <button className="btn btn-primary" onClick={onReopen} title="Reabrir este orçamento para editar e enviar uma versão atualizada">
+              <Pencil className="h-4 w-4" />
+              Reabrir para editar
+            </button>
+          ) : null}
           <button className="btn btn-secondary" onClick={onReturnToWaiting} disabled={!canEdit}>
             <RotateCcw className="h-4 w-4" />
             Retornar para aguardando

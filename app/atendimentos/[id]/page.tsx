@@ -51,6 +51,7 @@ function AtendimentoPageContent() {
   const [validateOpen, setValidateOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
+  const [reopenOpen, setReopenOpen] = useState(false);
   const [convertOpen, setConvertOpen] = useState(false);
   const [convertPassword, setConvertPassword] = useState("");
   const [convertError, setConvertError] = useState<string | null>(null);
@@ -289,6 +290,33 @@ function AtendimentoPageContent() {
     setActionLoading(false);
   }
 
+  // Reabre um orçamento já validado/enviado para nova edição (volta a
+  // "em_validacao"). Ao validar de novo, o Resposta Validada dispara outra vez e
+  // envia a versão atualizada como a válida.
+  async function reopenForEditing() {
+    if (!atendimento) return;
+    setActionLoading(true);
+    setError(null);
+
+    const { data, error: updateError } = await supabase
+      .from("atendimentos")
+      .update({ status: "em_validacao" })
+      .eq("id", atendimento.id)
+      .in("status", ["validado", "enviado"])
+      .select("id")
+      .maybeSingle();
+
+    if (updateError) {
+      setError(updateError.message);
+    } else if (!data) {
+      setError("Não foi possível reabrir. O status pode ter mudado — recarregue a página.");
+    }
+
+    setReopenOpen(false);
+    await loadAll();
+    setActionLoading(false);
+  }
+
   async function convert() {
     if (!atendimento) return;
     setActionLoading(true);
@@ -398,6 +426,8 @@ function AtendimentoPageContent() {
           onValidate={() => setValidateOpen(true)}
           onReject={() => setRejectOpen(true)}
           onReturnToWaiting={() => setReturnOpen(true)}
+          canReopen={atendimento.status === "validado" || atendimento.status === "enviado"}
+          onReopen={() => setReopenOpen(true)}
           canConvert={atendimento.status === "enviado"}
           onConvert={() => {
             setConvertError(null);
@@ -546,6 +576,16 @@ function AtendimentoPageContent() {
         loading={actionLoading}
         onCancel={() => setReturnOpen(false)}
         onConfirm={returnToWaiting}
+      />
+
+      <ConfirmDialog
+        open={reopenOpen}
+        title="Reabrir para editar"
+        message="Este orçamento volta para “Em validação” e fica editável de novo. Ao validar outra vez, a versão atualizada é enviada ao cliente como a válida, substituindo a anterior."
+        confirmLabel="Reabrir"
+        loading={actionLoading}
+        onCancel={() => setReopenOpen(false)}
+        onConfirm={reopenForEditing}
       />
 
       {convertOpen ? (
