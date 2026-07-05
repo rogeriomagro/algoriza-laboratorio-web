@@ -9,13 +9,12 @@ import {
   CalendarDays,
   ChevronDown,
   ExternalLink,
-  Loader2,
   MapPin,
   Phone,
   Stethoscope,
   XCircle,
 } from "lucide-react";
-import type { Atendimento, AtendimentoExame } from "@/lib/supabase/types";
+import type { Atendimento } from "@/lib/supabase/types";
 import {
   LAB_META,
   formatCurrency,
@@ -34,10 +33,7 @@ interface AtendimentoCardProps {
   onChanged?: () => void | Promise<void>;
 }
 
-type CardExame = Pick<AtendimentoExame, "id" | "nome" | "preco" | "cobertura" | "incluido" | "ordem">;
-
 interface CardDetails {
-  exames: CardExame[];
   observacoes_conversa: string | null;
   observacoes_prescricao: string | null;
   agendamento_desejado: string | null;
@@ -60,23 +56,15 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
   async function loadDetails() {
     if (details || loadingDetails) return;
     setLoadingDetails(true);
-    const [exRes, atRes] = await Promise.all([
-      supabase
-        .from("atendimento_exames")
-        .select("id,nome,preco,cobertura,incluido,ordem")
-        .eq("atendimento_id", atendimento.id)
-        .order("ordem", { ascending: true }),
-      supabase
-        .from("atendimentos")
-        .select("observacoes_conversa,observacoes_prescricao,agendamento_desejado")
-        .eq("id", atendimento.id)
-        .single(),
-    ]);
+    const { data } = await supabase
+      .from("atendimentos")
+      .select("observacoes_conversa,observacoes_prescricao,agendamento_desejado")
+      .eq("id", atendimento.id)
+      .single();
     setDetails({
-      exames: (exRes.data ?? []) as CardExame[],
-      observacoes_conversa: atRes.data?.observacoes_conversa ?? null,
-      observacoes_prescricao: atRes.data?.observacoes_prescricao ?? null,
-      agendamento_desejado: atRes.data?.agendamento_desejado ?? null,
+      observacoes_conversa: data?.observacoes_conversa ?? null,
+      observacoes_prescricao: data?.observacoes_prescricao ?? null,
+      agendamento_desejado: data?.agendamento_desejado ?? null,
     });
     setLoadingDetails(false);
   }
@@ -105,7 +93,6 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
     await onChanged?.();
   }
 
-  const exames = (details?.exames ?? []).filter((e) => e.incluido !== false);
   const agendamento = formatSchedulePreference(details?.agendamento_desejado);
 
   return (
@@ -190,34 +177,6 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
                 <span className="truncate">Coleta: {agendamento}</span>
               </div>
             ) : null}
-          </div>
-
-          {/* Exames (carregados sob demanda) */}
-          <div>
-            <p className="field-label mb-1">Exames</p>
-            {loadingDetails ? (
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Carregando...
-              </div>
-            ) : exames.length === 0 ? (
-              <p className="text-xs text-slate-500">Nenhum exame registrado.</p>
-            ) : (
-              <ul className="space-y-1">
-                {exames.map((exame) => (
-                  <li key={exame.id} className="flex items-center justify-between gap-2 text-xs">
-                    <span className="min-w-0 flex-1 truncate text-slate-700">{exame.nome || "Exame"}</span>
-                    {exame.cobertura ? (
-                      <span className="shrink-0 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
-                        Coberto {exame.cobertura === "sus" ? "SUS" : "Unimed"}
-                      </span>
-                    ) : (
-                      <span className="shrink-0 font-medium text-slate-600">{formatCurrency(exame.preco)}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           {/* Pendências */}
