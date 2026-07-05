@@ -1,0 +1,16 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lab-bg" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0a8a66"/>
+      <stop offset="1" stop-color="#063f34"/>
+    </linearGradient>
+  </defs>
+  <!-- tile da marca -->
+  <rect x="1" y="1" width="30" height="30" rx="7.5" fill="url(#lab-bg)"/>
+  <!-- colunas do kanban (ao fundo) -->
+  <rect x="5.5" y="6.5" width="6" height="19" rx="2" fill="#ffffff" opacity="0.16"/>
+  <rect x="13" y="6.5" width="6" height="19" rx="2" fill="#ffffff" opacity="0.16"/>
+  <rect x="20.5" y="6.5" width="6" height="19" rx="2" fill="#ffffff" opacity="0.16"/>
+  <!-- check de validação (destaque) -->
+  <path d="M8.5 16.4 L13.8 21.6 L23.5 10.6" stroke="#ffffff" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
