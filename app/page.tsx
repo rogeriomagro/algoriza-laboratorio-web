@@ -1,50 +1,39 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { AppShell } from "@/components/layout/AppShell";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { KanbanFilters } from "@/components/kanban/KanbanFilters";
 import { supabase } from "@/lib/supabase/client";
-import type { Atendimento } from "@/lib/supabase/types";
-import { labFromUnidade, normalizeSearch } from "@/lib/format";
-import { STATUS_ORDER } from "@/lib/status";
+import type { KanbanFilters as KanbanFiltersValue } from "@/lib/kanban";
+import { useKanbanBoard } from "@/hooks/useKanbanBoard";
 import { useRealtimeAtendimentos } from "@/hooks/useRealtimeAtendimentos";
 
-const KANBAN_COLUMNS =
-  "id,protocolo,telefone,responsavel_nome,paciente_nome,medico_solicitante,total_validado,total_bruto,desconto_pct,desconto_tipo,desconto_reais,status,termos_nao_encontrados,unidade_preferida,validado_por,created_at,updated_at";
+function useDebounced<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
 
 function KanbanPageContent() {
-  const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [validador, setValidador] = useState("");
   const [lab, setLab] = useState("");
   const [usuariosCadastrados, setUsuariosCadastrados] = useState<string[]>([]);
 
-  const loadAtendimentos = useCallback(async () => {
-    setError(null);
-    const { data, error: loadError } = await supabase
-      .from("atendimentos")
-      .select(KANBAN_COLUMNS)
-      .in("status", STATUS_ORDER)
-      .order("created_at", { ascending: false });
+  // A busca por texto é debounced para não disparar uma query por tecla.
+  const debouncedQuery = useDebounced(query.trim(), 350);
+  const filters: KanbanFiltersValue = useMemo(
+    () => ({ query: debouncedQuery, validador, lab }),
+    [debouncedQuery, validador, lab]
+  );
 
-    if (loadError) {
-      setError(loadError.message);
-    } else {
-      setAtendimentos((data || []) as Atendimento[]);
-    }
-
-    setLoading(false);
-  }, []);
-
-  const realtimeState = useRealtimeAtendimentos(loadAtendimentos);
-
-  useEffect(() => {
-    loadAtendimentos();
-  }, [loadAtendimentos]);
+  const { columns, loadMore, refresh } = useKanbanBoard(filters);
+  const realtimeState = useRealtimeAtendimentos(refresh);
 
   useEffect(() => {
     (async () => {
@@ -64,40 +53,11 @@ function KanbanPageContent() {
   const validadores = useMemo(() => {
     const set = new Set<string>();
     for (const nome of usuariosCadastrados) if (nome) set.add(nome);
-    for (const atendimento of atendimentos) {
-      const nome = (atendimento.validado_por || "").trim();
-      if (nome) set.add(nome);
-    }
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [usuariosCadastrados, atendimentos]);
-
-  const filtered = useMemo(() => {
-    const q = normalizeSearch(query);
-
-    return atendimentos.filter((atendimento) => {
-      if (q) {
-        const haystack = normalizeSearch(
-          [
-            atendimento.protocolo,
-            atendimento.paciente_nome,
-            atendimento.telefone,
-            atendimento.medico_solicitante,
-            atendimento.responsavel_nome
-          ].join(" ")
-        );
-        if (!haystack.includes(q)) return false;
-      }
-
-      if (validador && (atendimento.validado_por || "").trim() !== validador) return false;
-
-      if (lab && labFromUnidade(atendimento.unidade_preferida) !== lab) return false;
-
-      return true;
-    });
-  }, [atendimentos, query, validador, lab]);
+  }, [usuariosCadastrados]);
 
   return (
-    <AppShell onRefresh={loadAtendimentos} realtimeState={realtimeState}>
+    <AppShell onRefresh={refresh} realtimeState={realtimeState}>
       <KanbanFilters
         value={query}
         onChange={setQuery}
@@ -108,15 +68,7 @@ function KanbanPageContent() {
         onLabChange={setLab}
       />
 
-      {loading ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">Carregando atendimentos...</div>
-      ) : error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-          Erro ao carregar atendimentos: {error}
-        </div>
-      ) : (
-        <KanbanBoard atendimentos={filtered} onChanged={loadAtendimentos} />
-      )}
+      <KanbanBoard columns={columns} onLoadMore={loadMore} onChanged={refresh} />
     </AppShell>
   );
 }
