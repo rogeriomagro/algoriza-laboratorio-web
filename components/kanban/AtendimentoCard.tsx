@@ -19,7 +19,6 @@ import {
   LAB_META,
   formatCurrency,
   formatDate,
-  formatDateOnly,
   formatPhone,
   formatSchedulePreference,
   labFromUnidade,
@@ -103,32 +102,27 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
         type="button"
         onClick={toggle}
         aria-expanded={expanded}
-        className="block w-full p-3 text-left"
+        className="flex w-full items-start justify-between gap-2 p-3 text-left"
       >
-        {/* Linha 1: nome com linha exclusiva (largura total) */}
-        <div className="flex items-center gap-1.5">
-          <ChevronDown
-            className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${expanded ? "rotate-180" : ""}`}
-          />
-          {missingCount > 0 ? (
-            <AlertCircle
-              className="h-3.5 w-3.5 shrink-0 text-amber-500"
-              aria-label={`${missingCount} termo(s) pendente(s)`}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${expanded ? "rotate-180" : ""}`}
             />
-          ) : null}
-          <h3 className="truncate text-sm font-semibold leading-tight text-slate-950">
-            {atendimento.paciente_nome || "Paciente não informado"}
-          </h3>
-        </div>
+            {missingCount > 0 ? (
+              <AlertCircle
+                className="h-3.5 w-3.5 shrink-0 text-amber-500"
+                aria-label={`${missingCount} termo(s) pendente(s)`}
+              />
+            ) : null}
+            <h3 className="truncate text-sm font-semibold leading-tight text-slate-950">
+              {atendimento.paciente_nome || "Paciente não informado"}
+            </h3>
+          </div>
 
-        {/* Linha 2: laboratório + data (esq.) · status + valor (dir.) */}
-        <div className="mt-1.5 flex items-center justify-between gap-2 pl-[22px]">
-          <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 pl-[22px] text-xs text-slate-500">
             {labMeta ? (
-              <span
-                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5"
-                title={LAB_META[labMeta].nome}
-              >
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5">
                 <Image
                   src={LAB_META[labMeta].logo}
                   alt={LAB_META[labMeta].nome}
@@ -137,20 +131,20 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
                   className="h-3 w-3 object-contain"
                 />
                 <span className="text-[10px] font-medium text-slate-600">
-                  {labMeta === "alfa" ? "Alfa" : "Penha"}
+                  {labMeta === "alfa" ? "Alfa Labs" : "N. S. da Penha"}
                 </span>
               </span>
             ) : null}
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <CalendarClock className="h-3.5 w-3.5 shrink-0 text-brand-emerald/80" />
-              <span className="truncate">{formatDateOnly(atendimento.created_at)}</span>
+            <span className="inline-flex items-center gap-1">
+              <CalendarClock className="h-3.5 w-3.5 text-brand-emerald/80" />
+              {formatDate(atendimento.created_at)}
             </span>
           </div>
+        </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <StatusBadge status={atendimento.status} />
-            <span className="text-sm font-semibold tracking-tight text-brand-forest">{formatCurrency(total)}</span>
-          </div>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <StatusBadge status={atendimento.status} />
+          <span className="text-sm font-semibold tracking-tight text-brand-forest">{formatCurrency(total)}</span>
         </div>
       </button>
 
@@ -164,10 +158,6 @@ export function AtendimentoCard({ atendimento, onChanged }: AtendimentoCardProps
             <div className="flex items-center gap-1.5">
               <Phone className="h-3.5 w-3.5 text-brand-emerald" />
               <span className="truncate">{formatPhone(atendimento.telefone) || "Telefone não informado"}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CalendarClock className="h-3.5 w-3.5 text-brand-emerald" />
-              <span className="truncate">Recebido em {formatDate(atendimento.created_at)}</span>
             </div>
             {atendimento.unidade_preferida ? (
               <div className="flex items-center gap-1.5">
