@@ -330,13 +330,23 @@ export function CalendarioView() {
                     info.aberto
                       ? "border-slate-200 bg-gradient-to-br from-white to-brand-mint/25 hover:border-brand-emerald/45"
                       : "border-slate-200 bg-slate-50/80 hover:border-slate-300",
-                    isSelected ? "ring-2 ring-brand-emerald ring-offset-1" : "",
+                    isSelected
+                      ? "ring-2 ring-brand-emerald ring-offset-1"
+                      : isToday
+                        ? "ring-2 ring-brand-teal/70 ring-offset-1"
+                        : "",
                   ].join(" ")}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-sm font-semibold ${info.aberto ? "text-slate-900" : "text-slate-400"}`}>{cell.day}</span>
                     {isToday ? (
-                      <span className="rounded-full bg-brand-teal/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-brand-teal">Hoje</span>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white shadow-sm shadow-brand-teal/30">
+                        {cell.day}
+                      </span>
+                    ) : (
+                      <span className={`text-sm font-semibold ${info.aberto ? "text-slate-900" : "text-slate-400"}`}>{cell.day}</span>
+                    )}
+                    {isToday ? (
+                      <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-brand-teal">Hoje</span>
                     ) : null}
                   </div>
                   <div className="mt-auto">
