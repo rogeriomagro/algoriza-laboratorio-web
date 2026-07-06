@@ -346,7 +346,7 @@ export function CalendarioView() {
                       <span className={`text-sm font-semibold ${info.aberto ? "text-slate-900" : "text-slate-400"}`}>{cell.day}</span>
                     )}
                     {isToday ? (
-                      <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-brand-teal">Hoje</span>
+                      <span className="rounded-full bg-brand-teal px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white shadow-sm shadow-brand-teal/30">Hoje</span>
                     ) : null}
                   </div>
                   <div className="mt-auto">
