@@ -153,7 +153,10 @@ export interface Agendamento {
   atendimento_id: string | null;
   unidade: string;
   data: string;
-  hora: string;
+  // Coleta por ORDEM DE CHEGADA em 2 períodos (manhã/tarde) — não há hora marcada.
+  // `hora` é legado (nullable) para reservas antigas migradas.
+  periodo: "manha" | "tarde" | null;
+  hora: string | null;
   status: AgendamentoStatus;
   expira_em: string | null;
   created_at: string | null;

@@ -5,12 +5,15 @@ import { CalendarClock, Check, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import type { Atendimento, Agendamento } from "@/lib/supabase/types";
 import {
+  AGENDA_PERIODOS,
   AGENDA_UNIDADES,
   agendaUnidadeLabel,
   formatDateOnly,
   formatSchedulePreference,
+  horaToPeriodo,
   normUnidade,
   parseSchedulePreference,
+  periodoLabel,
 } from "@/lib/format";
 
 interface Props {
@@ -30,7 +33,7 @@ export function AgendamentoPanel({ atendimento, readOnly }: Props) {
     normUnidade(atendimento.unidade_preferida) ?? AGENDA_UNIDADES[0].slug
   );
   const [data, setData] = useState(pref?.key ?? "");
-  const [hora, setHora] = useState(pref?.hora ?? "");
+  const [periodo, setPeriodo] = useState<string>(pref?.periodo ?? "manha");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,29 +57,31 @@ export function AgendamentoPanel({ atendimento, readOnly }: Props) {
   }, [load]);
 
   async function agendar() {
-    if (!data || !hora) {
-      setError("Informe data e horário.");
+    if (!data || !periodo) {
+      setError("Informe a data e o período.");
       return;
     }
     setSaving(true);
     setError(null);
-    const { error: err } = await supabase.from("agendamentos").insert({
-      atendimento_id: atendimento.id,
-      unidade,
-      data,
-      hora,
-      status: "confirmado",
+    // Grava/atualiza o agendamento por período via RPC (idempotente por atendimento).
+    const { data: res, error: err } = await supabase.rpc("confirmar_agendamento_periodo", {
+      p_atendimento_id: atendimento.id,
+      p_unidade: unidade,
+      p_data: data,
+      p_periodo: periodo,
     });
-    if (err) {
+    const resObj = res as { ok?: boolean; motivo?: string } | null;
+    if (err || (resObj && resObj.ok === false)) {
       setSaving(false);
-      setError(err.message);
+      setError(err?.message || resObj?.motivo || "Falha ao agendar.");
       return;
     }
-    // Denormaliza o slot confirmado (ISO rígido) no atendimento — é daqui que o
-    // PDF e o calendário leem a data/hora da coleta.
+    // Denormaliza a preferência no atendimento (data + período) — é daqui que o
+    // PDF e o card leem a coleta.
+    const periodoTxt = periodo === "tarde" ? "tarde" : "manhã";
     await supabase
       .from("atendimentos")
-      .update({ agendamento_desejado: `${data} ${hora}` })
+      .update({ agendamento_desejado: `${data} ${periodoTxt}` })
       .eq("id", atendimento.id);
     setSaving(false);
     await load();
@@ -112,7 +117,7 @@ export function AgendamentoPanel({ atendimento, readOnly }: Props) {
         <div className="mt-3 rounded-lg border border-brand-emerald/20 bg-brand-mint/30 p-3">
           <div className="flex items-center gap-2 text-sm font-medium text-brand-forest">
             <CalendarClock className="h-4 w-4" />
-            {formatDateOnly(ag.data)} às {ag.hora.slice(0, 5)} — {agendaUnidadeLabel(ag.unidade)}
+            {formatDateOnly(ag.data)} — {periodoLabel(ag.periodo ?? horaToPeriodo(ag.hora))} — {agendaUnidadeLabel(ag.unidade)}
           </div>
           <p className="mt-1 text-xs text-slate-500">Status: {ag.status}</p>
           {!readOnly ? (
@@ -135,14 +140,17 @@ export function AgendamentoPanel({ atendimento, readOnly }: Props) {
               />
             </label>
             <label className="block">
-              <span className="field-label">Horário</span>
-              <input
-                type="time"
+              <span className="field-label">Período</span>
+              <select
                 className="field-input mt-1 text-sm"
-                value={hora}
-                onChange={(e) => setHora(e.target.value)}
+                value={periodo}
+                onChange={(e) => setPeriodo(e.target.value)}
                 disabled={readOnly || saving}
-              />
+              >
+                {AGENDA_PERIODOS.map((p) => (
+                  <option key={p.slug} value={p.slug}>{p.label} ({p.janela})</option>
+                ))}
+              </select>
             </label>
           </div>
           <label className="block">

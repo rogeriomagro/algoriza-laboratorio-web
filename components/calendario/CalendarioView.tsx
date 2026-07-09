@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ChevronLeft, ChevronRight, Lock, Unlock, Check, ChevronDown, ExternalLink, User } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { AGENDA_UNIDADES, formatCurrency, formatPhone, normUnidade, parseSchedulePreference } from "@/lib/format";
+import { AGENDA_PERIODOS, AGENDA_UNIDADES, formatCurrency, formatPhone, horaToPeriodo, normUnidade, parseSchedulePreference } from "@/lib/format";
 import type { AgendaConfig, AgendaExcecao, Agendamento } from "@/lib/supabase/types";
 
 type AgendamentoCal = Agendamento & {
@@ -59,24 +59,6 @@ function parseKey(key: string): Date {
 function isoDow(date: Date) {
   return ((date.getDay() + 6) % 7) + 1; // 1=seg … 7=dom
 }
-function hhmm(t: string | null | undefined) {
-  return (t ?? "").slice(0, 5);
-}
-function timeToMin(t: string) {
-  const [h, m] = hhmm(t).split(":").map(Number);
-  return (h || 0) * 60 + (m || 0);
-}
-function minToTime(min: number) {
-  return `${pad(Math.floor(min / 60))}:${pad(min % 60)}`;
-}
-function slotsFromConfig(cfg: AgendaConfig): string[] {
-  const start = timeToMin(cfg.hora_inicio);
-  const end = timeToMin(cfg.hora_fim);
-  const step = Math.max(5, cfg.slot_min || 30);
-  const out: string[] = [];
-  for (let m = start; m < end; m += step) out.push(minToTime(m));
-  return out;
-}
 function formatLongDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(date);
 }
@@ -123,7 +105,7 @@ export function CalendarioView() {
         .or(`unidade.is.null,unidade.eq.${unidade}`),
       supabase
         .from("agendamentos")
-        .select("id, atendimento_id, unidade, data, hora, status, expira_em, created_at, atendimentos(paciente_nome, protocolo, telefone, plano_convenio, total_validado)")
+        .select("id, atendimento_id, unidade, data, periodo, hora, status, expira_em, created_at, atendimentos(paciente_nome, protocolo, telefone, plano_convenio, total_validado)")
         .eq("unidade", unidade)
         .gte("data", monthStart)
         .lte("data", monthEnd)
@@ -181,14 +163,14 @@ export function CalendarioView() {
   // aparecem como "agendada", não como "preferência" (evita marcador duplo).
   const prefsPorDia = useMemo(() => {
     const confirmados = new Set(ags.filter(agAtivo).map((a) => a.atendimento_id));
-    const map = new Map<string, Array<{ pref: PrefCal; hora: string | null }>>();
+    const map = new Map<string, Array<{ pref: PrefCal; periodo: "manha" | "tarde" | null }>>();
     for (const p of prefs) {
       if (confirmados.has(p.id)) continue;
       if (normUnidade(p.unidade_preferida) !== unidade) continue;
       const parsed = parseSchedulePreference(p.agendamento_desejado);
       if (!parsed) continue;
       const arr = map.get(parsed.key) ?? [];
-      arr.push({ pref: p, hora: parsed.hora });
+      arr.push({ pref: p, periodo: parsed.periodo });
       map.set(parsed.key, arr);
     }
     return map;
@@ -262,7 +244,7 @@ export function CalendarioView() {
             <div>
               <h1 className="text-xl font-semibold text-slate-950">Calendário de coletas</h1>
               <p className="mt-1 text-sm text-slate-600">
-                Agenda por unidade. Veja os horários e a ocupação de cada dia; bloqueie ou libere datas.
+                Agenda por unidade — atendimento por ordem de chegada, em 2 períodos. Veja as coletas de cada dia; bloqueie ou libere datas.
               </p>
             </div>
           </div>
@@ -381,7 +363,7 @@ export function CalendarioView() {
                 <CalendarDays className="h-6 w-6" />
               </span>
               <p className="mt-3 text-sm font-medium text-slate-700">Selecione um dia</p>
-              <p className="mt-1 max-w-[240px] text-xs text-slate-500">Clique numa data para ver os horários e a ocupação.</p>
+              <p className="mt-1 max-w-[240px] text-xs text-slate-500">Clique numa data para ver as coletas por período.</p>
             </div>
           ) : (
             <div className="flex h-full flex-col">
@@ -394,14 +376,14 @@ export function CalendarioView() {
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3">
                   <p className="text-xs font-semibold text-amber-800">Preferências do cliente (a confirmar)</p>
                   <ul className="mt-2 space-y-1.5">
-                    {prefsDoDia.map(({ pref, hora }) => (
+                    {prefsDoDia.map(({ pref, periodo }) => (
                       <li key={pref.id} className="flex items-center gap-2 text-sm">
                         <User className="h-3.5 w-3.5 shrink-0 text-amber-600" />
                         <span className="min-w-0 flex-1 truncate text-slate-800">{pref.paciente_nome || "Sem nome"}</span>
-                        {hora ? (
-                          <span className="shrink-0 text-xs font-semibold text-amber-800">{hora}</span>
+                        {periodo ? (
+                          <span className="shrink-0 text-xs font-semibold text-amber-800">{periodo === "manha" ? "manhã" : "tarde"}</span>
                         ) : (
-                          <span className="shrink-0 text-xs text-slate-500">sem hora</span>
+                          <span className="shrink-0 text-xs text-slate-500">sem período</span>
                         )}
                         <Link
                           href={`/atendimentos/${pref.id}`}
@@ -435,25 +417,21 @@ export function CalendarioView() {
                 </div>
               ) : (
                 <div className="mt-4 flex min-h-0 flex-1 flex-col">
-                  <span className="field-label">Horários e ocupação</span>
+                  <span className="field-label">Coletas por período</span>
+                  <p className="mt-0.5 text-[11px] text-slate-400">Atendimento por ordem de chegada — sem horário marcado.</p>
                   <div className="mt-2 space-y-2 overflow-y-auto pr-1" style={{ maxHeight: 340 }}>
-                    {slotsFromConfig(selectedInfo.cfg).map((hora) => {
-                      // Agrupa por FAIXA do slot (não por igualdade exata): um
-                      // agendamento às 08:06 cai no slot das 08:00 (senão sumia da lista).
-                      const slotStart = timeToMin(hora);
-                      const slotEnd = slotStart + Math.max(5, selectedInfo.cfg!.slot_min || 30);
-                      const lista = agsDoDia.filter((a) => {
-                        const m = timeToMin(a.hora);
-                        return m >= slotStart && m < slotEnd;
-                      });
-                      const cap = selectedInfo.cfg!.capacidade;
-                      const usadas = lista.length;
-                      const cheio = usadas >= cap;
+                    {AGENDA_PERIODOS.map((per) => {
+                      const lista = agsDoDia.filter((a) => (a.periodo ?? horaToPeriodo(a.hora)) === per.slug);
                       return (
-                        <div key={hora} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                          <div className={`flex items-center justify-between px-3 py-1.5 ${cheio ? "bg-rose-50" : ""}`}>
-                            <span className="text-sm font-semibold text-slate-800">{hora}</span>
-                            <span className={`text-xs ${cheio ? "text-rose-700" : "text-slate-500"}`}>{usadas}/{cap} {cheio ? "(lotado)" : "vagas"}</span>
+                        <div key={per.slug} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                          <div className="flex items-center justify-between bg-brand-mint/20 px-3 py-2">
+                            <div className="min-w-0">
+                              <span className="text-sm font-semibold text-slate-800">{per.label}</span>
+                              <span className="ml-2 text-xs text-slate-500">{per.janela}</span>
+                            </div>
+                            <span className="shrink-0 text-xs font-semibold text-brand-forest">
+                              {lista.length} agendada{lista.length === 1 ? "" : "s"}
+                            </span>
                           </div>
                           {lista.length > 0 ? (
                             <div className="border-t border-slate-100">
@@ -468,7 +446,6 @@ export function CalendarioView() {
                                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition hover:bg-slate-50"
                                     >
                                       <User className="h-3.5 w-3.5 shrink-0 text-brand-emerald" />
-                                      <span className="shrink-0 text-xs font-semibold text-brand-forest">{hhmm(a.hora)}</span>
                                       <span className="min-w-0 flex-1 truncate font-medium text-slate-800">
                                         {pac?.paciente_nome || "Reserva sem ficha"}
                                       </span>
@@ -496,7 +473,9 @@ export function CalendarioView() {
                                 );
                               })}
                             </div>
-                          ) : null}
+                          ) : (
+                            <p className="px-3 py-2 text-xs text-slate-400">Nenhuma coleta neste período.</p>
+                          )}
                         </div>
                       );
                     })}

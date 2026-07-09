@@ -160,19 +160,44 @@ export function formatSchedulePreference(value: string | null | undefined): stri
   return dmy;
 }
 
-// Extrai data (chave AAAA-MM-DD) e hora (HH:MM ou null) de um agendamento no
-// formato rígido ISO. Retorna null quando o texto não começa com uma data ISO
-// (ex.: preferência antiga em texto livre "8h" — não dá para posicionar no calendário).
+// Períodos de coleta (ordem de chegada, 2 faixas). Substitui os slots de horário.
+export const AGENDA_PERIODOS = [
+  { slug: "manha" as const, label: "Período da manhã", janela: "6:30 às 10:00" },
+  { slug: "tarde" as const, label: "Período da tarde", janela: "12:00 às 16:00" },
+] as const;
+
+export type AgendaPeriodo = (typeof AGENDA_PERIODOS)[number]["slug"];
+
+export function periodoLabel(slug: string | null | undefined): string {
+  return AGENDA_PERIODOS.find((p) => p.slug === slug)?.label ?? "";
+}
+
+// Compat: converte uma hora legada (HH:MM) para o período (manhã antes do meio-dia).
+export function horaToPeriodo(hora: string | null | undefined): AgendaPeriodo | null {
+  const h = Number(String(hora || "").slice(0, 2));
+  if (!Number.isFinite(h)) return null;
+  return h < 12 ? "manha" : "tarde";
+}
+
+// Extrai data (chave AAAA-MM-DD) e o PERÍODO (manha/tarde) de um agendamento no
+// formato AAAA-MM-DD manhã/tarde. Também aceita o legado AAAA-MM-DD HH:MM
+// (converte a hora em período). Retorna null quando não começa com uma data ISO.
 export function parseSchedulePreference(
   value: string | null | undefined
-): { key: string; hora: string | null } | null {
-  const m = String(value || "")
-    .trim()
-    .match(/^(\d{4})-(\d{2})-(\d{2})(?:[\sT]+(\d{1,2}):(\d{2}))?/);
+): { key: string; hora: string | null; periodo: AgendaPeriodo | null } | null {
+  const raw = String(value || "").trim();
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[\sT]+(.+))?$/i);
   if (!m) return null;
   const key = `${m[1]}-${m[2]}-${m[3]}`;
-  const hora = m[4] != null ? `${m[4].padStart(2, "0")}:${m[5]}` : null;
-  return { key, hora };
+  const rest = (m[4] || "").trim();
+  const timeM = rest.match(/^(\d{1,2}):(\d{2})/);
+  const hora = timeM ? `${timeM[1].padStart(2, "0")}:${timeM[2]}` : null;
+  const r = normalizeSearch(rest);
+  let periodo: AgendaPeriodo | null = null;
+  if (r.includes("manha")) periodo = "manha";
+  else if (r.includes("tarde")) periodo = "tarde";
+  else if (timeM) periodo = Number(timeM[1]) < 12 ? "manha" : "tarde";
+  return { key, hora, periodo };
 }
 
 export function describeMatch(match: string | null | undefined): string {
