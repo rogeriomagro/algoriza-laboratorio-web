@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ChevronLeft, ChevronRight, Lock, Unlock, Check, ChevronDown, ExternalLink, User } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { AGENDA_PERIODOS, AGENDA_UNIDADES, formatCurrency, formatPhone, horaToPeriodo, normUnidade, parseSchedulePreference } from "@/lib/format";
+import { AGENDA_PERIODOS, AGENDA_UNIDADES, formatCurrency, formatPhone, horaToPeriodo, normUnidade, parseCurrency, parseSchedulePreference, totalComDesconto } from "@/lib/format";
 import type { AgendaConfig, AgendaExcecao, Agendamento } from "@/lib/supabase/types";
 
 type AgendamentoCal = Agendamento & {
@@ -14,6 +14,9 @@ type AgendamentoCal = Agendamento & {
     telefone: string | null;
     plano_convenio: string | null;
     total_validado: number | string | null;
+    desconto_tipo: "percentual" | "reais" | null;
+    desconto_pct: number | string | null;
+    desconto_reais: number | string | null;
   } | null;
 };
 
@@ -105,7 +108,7 @@ export function CalendarioView() {
         .or(`unidade.is.null,unidade.eq.${unidade}`),
       supabase
         .from("agendamentos")
-        .select("id, atendimento_id, unidade, data, periodo, hora, status, expira_em, created_at, atendimentos(paciente_nome, protocolo, telefone, plano_convenio, total_validado)")
+        .select("id, atendimento_id, unidade, data, periodo, hora, status, expira_em, created_at, atendimentos(paciente_nome, protocolo, telefone, plano_convenio, total_validado, desconto_tipo, desconto_pct, desconto_reais)")
         .eq("unidade", unidade)
         .gte("data", monthStart)
         .lte("data", monthEnd)
@@ -459,7 +462,7 @@ export function CalendarioView() {
                                         {pac?.protocolo ? <p>Protocolo: <span className="font-medium text-slate-800">{pac.protocolo}</span></p> : null}
                                         {pac?.telefone ? <p>Telefone: {formatPhone(pac.telefone)}</p> : null}
                                         {pac?.plano_convenio ? <p>Convênio: {pac.plano_convenio}</p> : null}
-                                        {pac?.total_validado != null ? <p>Total: {formatCurrency(pac.total_validado)}</p> : null}
+                                        {pac?.total_validado != null ? <p>Total: {formatCurrency(totalComDesconto(parseCurrency(pac.total_validado), pac).final)}</p> : null}
                                         {a.atendimento_id ? (
                                           <Link href={`/atendimentos/${a.atendimento_id}`} className="mt-1 inline-flex items-center gap-1 font-medium text-brand-forest hover:underline">
                                             <ExternalLink className="h-3 w-3" /> Abrir atendimento
