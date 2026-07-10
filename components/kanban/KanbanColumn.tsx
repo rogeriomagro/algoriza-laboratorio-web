@@ -39,7 +39,7 @@ export function KanbanColumn({
         <p className="mt-0.5 text-xs text-slate-600">{description}</p>
       </div>
 
-      <div className="space-y-2.5 p-3">
+      <div className="scrollbar-thin max-h-[calc(100vh-16rem)] space-y-2.5 overflow-y-auto p-3">
         {loading ? (
           <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
