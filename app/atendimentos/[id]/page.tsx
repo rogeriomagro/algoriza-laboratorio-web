@@ -468,6 +468,7 @@ function AtendimentoPageContent() {
             />
             <ExamList
               exames={exames}
+              termosNaoEncontrados={termsAsArray(atendimento.termos_nao_encontrados)}
               readOnly={readOnly}
               saving={saving}
               onSave={saveExame}
